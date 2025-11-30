@@ -37,50 +37,17 @@ st.markdown("""
     /* Homepage Elements */
     .hero-container { padding: 20px 20px; text-align: center; }
     
-    /* Improved Trending Cards */
+    /* Trending Cards */
     .trend-card {
-        background: white; 
-        border: 1px solid #f0f0f0; 
-        border-radius: 12px; 
-        padding: 20px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
-        transition: all 0.3s ease; 
-        height: 100%;
-        position: relative;
-        overflow: hidden;
+        background: white; border: 1px solid #f0f0f0; border-radius: 12px; padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03); transition: all 0.3s ease; height: 100%;
     }
-    .trend-card:hover { 
-        box-shadow: 0 8px 20px rgba(13, 110, 253, 0.1); 
-        transform: translateY(-3px); 
-        border-color: #0d6efd;
-    }
-    .trend-header { 
-        font-size: 16px; 
-        color: #333; 
-        font-weight: 800; 
-        margin-bottom: 15px; 
-        display: flex; 
-        align-items: center; 
-        gap: 8px;
-        border-bottom: 2px solid #f8f9fa;
-        padding-bottom: 10px;
-    }
-    .trend-item { 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center;
-        padding: 10px 0; 
-        border-bottom: 1px solid #f8f9fa; 
-        font-size: 14px; 
-    }
+    .trend-card:hover { box-shadow: 0 8px 20px rgba(13, 110, 253, 0.1); transform: translateY(-3px); border-color: #0d6efd; }
+    .trend-header { font-size: 16px; color: #333; font-weight: 800; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #f8f9fa; padding-bottom: 10px; }
+    .trend-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f8f9fa; font-size: 14px; }
     .trend-item:last-child { border-bottom: none; }
     .trend-name { font-weight: 600; color: #555; }
-    .trend-price-badge { 
-        font-weight: 700; 
-        padding: 4px 8px; 
-        border-radius: 6px; 
-        font-size: 12px;
-    }
+    .trend-price-badge { font-weight: 700; padding: 4px 8px; border-radius: 6px; font-size: 12px; }
     
     /* Account Top Right */
     .account-bar { display: flex; justify-content: flex-end; align-items: center; gap: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; margin-bottom: 20px; }
@@ -98,26 +65,13 @@ st.markdown("""
     
     /* News Feed (Yahoo Style) */
     .news-card-row {
-        display: flex;
-        flex-direction: row;
-        background: white;
-        border-bottom: 1px solid #eee;
-        padding: 15px 0;
-        text-decoration: none;
-        align-items: start;
-        transition: background-color 0.2s;
+        display: flex; flex-direction: row; background: white; border-bottom: 1px solid #eee;
+        padding: 15px 0; text-decoration: none; align-items: start; transition: background-color 0.2s;
     }
     .news-card-row:hover { background-color: #fcfcfc; }
     .news-img-container {
-        width: 120px;
-        height: 80px;
-        flex-shrink: 0;
-        margin-right: 15px;
-        border-radius: 8px;
-        overflow: hidden;
-        background-color: #f8f9fa;
-        display: flex; align-items: center; justify-content: center;
-        border: 1px solid #eee;
+        width: 120px; height: 80px; flex-shrink: 0; margin-right: 15px; border-radius: 8px;
+        overflow: hidden; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center; border: 1px solid #eee;
     }
     .news-img { width: 100%; height: 100%; object-fit: cover; }
     .news-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
@@ -125,22 +79,9 @@ st.markdown("""
     .news-meta { font-size: 12px; color: #666; }
     
     /* Gemini Sidebar */
-    .gemini-box {
-        background-color: #f8f9fa;
-        border-left: 1px solid #eee;
-        padding: 20px;
-        height: 100%;
-        min-height: 600px;
-    }
-    .gemini-header {
-        font-size: 18px; font-weight: 700; color: #0d6efd; margin-bottom: 15px;
-        display: flex; align-items: center; gap: 10px;
-    }
-    .chat-bubble {
-        background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-size: 13px;
-        border: 1px solid #eee;
-    }
+    .gemini-box { background-color: #f8f9fa; border-left: 1px solid #eee; padding: 20px; height: 100%; min-height: 600px; }
+    .gemini-header { font-size: 18px; font-weight: 700; color: #0d6efd; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+    .chat-bubble { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-size: 13px; border: 1px solid #eee; }
     
     /* Loading */
     .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; animation: fadein 1s; }
@@ -167,7 +108,7 @@ if 'chat_history' not in st.session_state: st.session_state['chat_history'] = []
 # --- TRANSLATION DICTIONARY ---
 TRANS = {
     "English": {
-        "Home": "🏠 Home", "Terminal": "📈 Asset Terminal", "Favs": "⭐ Favorites", "Media": "📺 Media & News",
+        "Home": "🏠 Home", "Terminal": "📈 Asset Terminal", "Favs": "⭐ Favorites", "Media": "📺 Media & News", "Map": "🗺️ Finviz Map",
         "Stocks": "Stocks", "Commodities": "Commodities", "Crypto": "Crypto", "Forex": "Currencies/Forex",
         "Search": "Search Assets", "Search_Ph": "Symbol or Name (e.g. Nvidia, Gold, BTC)...", "Trend_Stocks": "🔥 Trending Stocks",
         "Trend_Crypto": "🪙 Top Crypto", "Trend_Fx": "💱 Key Currencies", "Quick": "Quick Access",
@@ -179,7 +120,7 @@ TRANS = {
         "Trend_KR": "🇰🇷 Korea Markets"
     },
     "한국어": {
-        "Home": "🏠 홈", "Terminal": "📈 자산 터미널", "Favs": "⭐ 관심종목", "Media": "📺 미디어 & 뉴스",
+        "Home": "🏠 홈", "Terminal": "📈 자산 터미널", "Favs": "⭐ 관심종목", "Media": "📺 미디어 & 뉴스", "Map": "🗺️ 핀비즈 맵",
         "Stocks": "주식", "Commodities": "원자재", "Crypto": "암호화폐", "Forex": "통화/외환",
         "Search": "자산 검색", "Search_Ph": "심볼 또는 이름 (예: 삼성전자, 비트코인)...", "Trend_Stocks": "🔥 인기 주식",
         "Trend_Crypto": "🪙 주요 암호화폐", "Trend_Fx": "💱 주요 통화", "Quick": "빠른 접속",
@@ -363,6 +304,34 @@ def analyze_news_sentiment(news_items):
     else: label = "Neutral"
     return pos, neg, neu, label
 
+def generate_ai_report(ticker, price, sma, rsi, fg_score, fg_label, news_label):
+    report = f"### 🧠 AI Executive Summary for {ticker}\n\n"
+    report += f"**1. Market Sentiment:** {fg_label} ({fg_score}/100).\n"
+    report += f"**2. News Analysis:** {news_label} sentiment detected.\n"
+    trend = "Bullish 🟢" if price > sma else "Bearish 🔴"
+    rsi_state = "Overbought ⚠️" if rsi > 70 else "Oversold 🛒" if rsi < 30 else "Neutral ⚖️"
+    report += f"**3. Technicals:** {trend} trend, RSI is {rsi_state}."
+    return report
+
+@st.cache_data(ttl=600)
+def fetch_rss_feed(url):
+    try:
+        response = requests.get(url, timeout=5)
+        root = ET.fromstring(response.content)
+        items = []
+        for i in root.findall('.//item')[:10]:
+            title = i.find('title').text
+            link = i.find('link').text
+            # Try find image
+            img = ""
+            desc = i.find('description').text if i.find('description') is not None else ""
+            if 'src="' in desc:
+                try: img = re.search(r'src="([^"]+)"', desc).group(1)
+                except: pass
+            items.append({'title':title, 'link':link, 'img':img})
+        return items
+    except: return []
+
 # --- SMART ASSISTANT LOGIC ---
 def get_smart_response(query, ticker, data):
     query = query.lower()
@@ -392,24 +361,6 @@ def submit_chat():
         st.session_state.chat_history.append({"role": "ai", "content": response})
         st.session_state.chat_input_val = "" 
 
-@st.cache_data(ttl=600)
-def fetch_rss_feed(url):
-    try:
-        response = requests.get(url, timeout=5)
-        root = ET.fromstring(response.content)
-        # Try to find media:content or enclosure for image
-        items = []
-        for i in root.findall('.//item')[:5]:
-            item = {'title': i.find('title').text, 'link': i.find('link').text, 'img': ''}
-            # Basic image check (very simple RSS parsing)
-            desc = i.find('description').text if i.find('description') is not None else ""
-            if 'src="' in desc:
-                try: item['img'] = re.search(r'src="([^"]+)"', desc).group(1)
-                except: pass
-            items.append(item)
-        return items
-    except: return []
-
 # --- NAVIGATION ---
 st.sidebar.markdown('<div class="prostock-logo-sidebar">Pro<span>Stock</span></div>', unsafe_allow_html=True)
 if st.sidebar.button(txt("Home"), type="secondary", use_container_width=True): st.session_state['mode'] = "Home"
@@ -420,6 +371,7 @@ st.sidebar.markdown("---")
 if st.sidebar.button(txt("Terminal"), use_container_width=True): st.session_state['mode'] = "Asset Terminal"
 if st.sidebar.button(txt("Favs"), use_container_width=True): st.session_state['mode'] = "Favorites"
 if st.sidebar.button(txt("Media"), use_container_width=True): st.session_state['mode'] = "Media & News"
+if st.sidebar.button(txt("Map"), use_container_width=True): st.session_state['mode'] = "Map"
 mode = st.session_state['mode']
 st.sidebar.markdown("---")
 with st.sidebar.expander("🧮 Currency Calc", expanded=False):
@@ -463,14 +415,8 @@ if mode == "Home":
         st.markdown(f"""<div class="trend-card"><div class="trend-header">{title}</div>""", unsafe_allow_html=True)
         for name, sym in assets.items():
             p, chg = get_live_price(sym)
-            color_class = "#00C853" if chg >= 0 else "#D50000"
-            bg_class = "rgba(0, 200, 83, 0.1)" if chg >= 0 else "rgba(213, 0, 0, 0.1)"
-            st.markdown(f"""
-            <div class="trend-item">
-                <span class="trend-name">{name}</span>
-                <span class="trend-price-badge" style="color:{color_class}; background:{bg_class};">{p:,.2f} ({chg:+.2f}%)</span>
-            </div>
-            """, unsafe_allow_html=True)
+            color = "#00C853" if chg >= 0 else "#D50000"
+            st.markdown(f"""<div class="trend-item"><span class="trend-name">{name}</span><span class="trend-price" style="color:{color}">{p:,.2f} ({chg:+.2f}%)</span></div>""", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     with t1: render_trend_card(txt("Trend_Stocks"), {"NVIDIA": "NVDA", "Tesla": "TSLA", "Apple": "AAPL", "Samsung": "005930.KS"})
@@ -483,7 +429,8 @@ if mode == "Home":
     news_cols = st.columns(2)
     
     def render_home_news(url):
-        for n in fetch_rss_feed(url):
+        items = fetch_rss_feed(url)
+        for n in items: # Show 5 items
             img_html = f"<div class='news-img-container'><img src='{n['img']}' class='news-img'></div>" if n['img'] else "<div class='news-img-container' style='background:#eee; font-size:20px;'>📰</div>"
             st.markdown(f"""
             <a href='{n['link']}' target='_blank' class='news-card-row'>
@@ -535,7 +482,7 @@ elif mode == "Asset Terminal":
         else:
             market_type_sel = st.sidebar.selectbox("Market Type", [txt("Stocks"), txt("Commodities"), txt("Forex"), txt("Crypto")])
             if market_type_sel == txt("Stocks"): market_type="Stocks"; ticker = st.sidebar.text_input("Ticker", "AAPL").upper()
-            elif market_type_sel == txt("Commodities"): market_type="Commodities"; ticker = {"Gold":"GC=F","Silver":"SI=F","Oil":"CL=F"}[st.sidebar.selectbox("Select", ["Gold","Silver"])]
+            elif market_type_sel == txt("Commodities"): market_type="Commodities"; ticker = {"Gold":"GC=F","Silver":"SI=F","Oil":"CL=F"}[st.sidebar.selectbox("Select", ["Gold","Silver","Oil"])]
             elif market_type_sel == txt("Forex"): market_type="Currencies/Forex"; ticker = {"USD/KRW":"KRW=X","EUR/USD":"EURUSD=X"}[st.sidebar.selectbox("Select", ["USD/KRW","EUR/USD"])]
             elif market_type_sel == txt("Crypto"): market_type="Crypto"; ticker = {"Bitcoin":"BTC-USD","Ethereum":"ETH-USD"}[st.sidebar.selectbox("Select", ["Bitcoin","Ethereum"])]
         
@@ -612,7 +559,7 @@ elif mode == "Asset Terminal":
                     try: vix = yf.Ticker("^VIX").history(period="5d")['Close'].iloc[-1]; fear_score = max(0, min(100, 100 - (vix - 10) * 2.5)); fg_label = "Fear" if fear_score < 45 else "Greed"
                     except: fear_score=50; fg_label="Neutral"
                     
-                    # Restored Forecast Logic
+                    # RESTORED FORECAST CHART
                     if len(data) > 30:
                         df_ml = data[['Close']].dropna().reset_index(); df_ml['i'] = df_ml.index
                         model = LinearRegression().fit(df_ml[['i']], df_ml['Close'])
@@ -621,7 +568,7 @@ elif mode == "Asset Terminal":
                         fig_p = go.Figure()
                         fig_p.add_trace(go.Scatter(x=df_ml['i'][-50:], y=df_ml['Close'][-50:], name='History'))
                         fig_p.add_trace(go.Scatter(x=fut_x.flatten(), y=pred, name='Forecast', line=dict(dash='dash', color='red')))
-                        fig_p.update_layout(height=250, margin=dict(l=0,r=0,t=20,b=0), template="plotly_white"); st.plotly_chart(fig_p, use_container_width=True)
+                        fig_p.update_layout(height=250, margin=dict(l=0,r=0,t=20,b=0), template="plotly_white", title="30-Period Price Forecast"); st.plotly_chart(fig_p, use_container_width=True)
                         st.caption(f"Projected Trend: **{curr_code} {pred[-1]:.2f}**")
                     else: st.warning("Insufficient data for forecast")
                     
@@ -698,3 +645,30 @@ elif mode == "Media & News":
         for n in get_feed("http://feeds.bbci.co.uk/news/business/rss.xml"): st.markdown(f"<div class='news-list-item'><a href='{n['link']}' target='_blank' class='news-link'>{n['title']}</a></div>", unsafe_allow_html=True)
     with t3:
         for n in get_feed("http://rss.cnn.com/rss/money_latest.rss"): st.markdown(f"<div class='news-list-item'><a href='{n['link']}' target='_blank' class='news-link'>{n['title']}</a></div>", unsafe_allow_html=True)
+
+# --- MODE: MAP ---
+elif mode == "Map":
+    st.title("🗺️ S&P 500 Map")
+    components.html("""
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-stock-heatmap.js" async>
+      {
+      "exchanges": [],
+      "dataSource": "SPX500",
+      "grouping": "sector",
+      "blockSize": "market_cap_basic",
+      "blockColor": "change",
+      "locale": "en",
+      "symbolUrl": "",
+      "colorTheme": "light",
+      "hasTopBar": false,
+      "isDataSetEnabled": false,
+      "isZoomEnabled": true,
+      "hasSymbolTooltip": true,
+      "width": "100%",
+      "height": "800"
+    }
+      </script>
+    </div>
+    """, height=810)
