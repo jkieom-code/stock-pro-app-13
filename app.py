@@ -76,6 +76,7 @@ st.markdown("""
         border-left: 3px solid transparent;
     }
     .news-card-row:hover { background-color: #fcfcfc; border-left: 3px solid #0d6efd; }
+    .news-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
     .news-title { font-size: 15px; font-weight: 600; color: #1a0dab; line-height: 1.4; margin-bottom: 5px; text-decoration: none; display: block;}
     .news-meta { font-size: 12px; color: #666; }
     
@@ -351,26 +352,25 @@ def fetch_rss_feed(url):
 
 # --- REAL GEMINI AI ---
 def call_gemini_api(prompt, api_key):
-    # Use Flash Latest as requested
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + api_key
+    # Model Fallback Sequence
+    models = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"]
+    
     headers = {'Content-Type': 'application/json'}
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {"maxOutputTokens": 300}
     }
-    try:
-        r = requests.post(url, headers=headers, json=payload)
-        if r.status_code == 200:
-            return r.json()['candidates'][0]['content']['parts'][0]['text']
-        elif r.status_code == 404:
-             # Fallback to standard flash if latest alias is missing in region
-             url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + api_key
-             r = requests.post(url, headers=headers, json=payload)
-             if r.status_code == 200:
+
+    for model in models:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+        try:
+            r = requests.post(url, headers=headers, json=payload)
+            if r.status_code == 200:
                 return r.json()['candidates'][0]['content']['parts'][0]['text']
-        return f"Error: {r.status_code} - {r.text}"
-    except Exception as e:
-        return f"Connection Error: {e}"
+        except:
+            continue
+            
+    return "AI Service Unavailable. Please check API Key or try again later."
 
 def get_smart_response(query, ticker, data, api_key):
     if not api_key:
@@ -378,8 +378,17 @@ def get_smart_response(query, ticker, data, api_key):
 
     # Check for data availability
     latest_price = data['Close'].iloc[-1] if not data.empty else "N/A"
-    rsi_val = f"{data['RSI'].iloc[-1]:.2f}" if 'RSI' in data.columns and not pd.isna(data['RSI'].iloc[-1]) else "N/A"
-    sma_val = f"{data['SMA'].iloc[-1]:.2f}" if 'SMA' in data.columns and not pd.isna(data['SMA'].iloc[-1]) else "N/A"
+    
+    # Safe extraction of RSI/SMA
+    rsi_val = "N/A"
+    if 'RSI' in data.columns and not data['RSI'].empty:
+        val = data['RSI'].iloc[-1]
+        if not pd.isna(val): rsi_val = f"{val:.2f}"
+        
+    sma_val = "N/A"
+    if 'SMA' in data.columns and not data['SMA'].empty:
+        val = data['SMA'].iloc[-1]
+        if not pd.isna(val): sma_val = f"{val:.2f}"
 
     prompt = f"""
     You are a professional financial analyst. Analyze {ticker} based on this real-time data:
