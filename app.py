@@ -65,13 +65,27 @@ st.markdown("""
     
     /* News Feed (Yahoo Style) */
     .news-card-row {
-        display: flex; flex-direction: row; background: white; border-bottom: 1px solid #eee;
-        padding: 15px 0; text-decoration: none; align-items: start; transition: background-color 0.2s;
+        display: flex;
+        flex-direction: row;
+        background: white;
+        border-bottom: 1px solid #eee;
+        padding: 15px 0;
+        text-decoration: none;
+        align-items: start;
+        transition: background-color 0.2s;
+        min-height: 100px;
     }
     .news-card-row:hover { background-color: #fcfcfc; }
     .news-img-container {
-        width: 120px; height: 80px; flex-shrink: 0; margin-right: 15px; border-radius: 8px;
-        overflow: hidden; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center; border: 1px solid #eee;
+        width: 120px;
+        height: 80px;
+        flex-shrink: 0;
+        margin-right: 15px;
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: #f8f9fa;
+        display: flex; align-items: center; justify-content: center;
+        border: 1px solid #eee;
     }
     .news-img { width: 100%; height: 100%; object-fit: cover; }
     .news-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
@@ -79,12 +93,29 @@ st.markdown("""
     .news-meta { font-size: 12px; color: #666; }
     
     /* Gemini Sidebar */
-    .gemini-box { background-color: #f8f9fa; border-left: 1px solid #eee; padding: 20px; height: 100%; min-height: 600px; }
-    .gemini-header { font-size: 18px; font-weight: 700; color: #0d6efd; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-    .chat-bubble { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-size: 13px; border: 1px solid #eee; }
+    .gemini-box {
+        background-color: #f8f9fa;
+        border-left: 1px solid #eee;
+        padding: 20px;
+        height: 100%;
+        min-height: 600px;
+    }
+    .gemini-header {
+        font-size: 20px; font-weight: 700; color: #333; margin-bottom: 20px;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .gemini-logo-icon { width: 30px; height: 30px; }
+    
+    .chat-bubble {
+        background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-size: 13px;
+        border: 1px solid #eee;
+    }
     
     /* Loading */
     .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; animation: fadein 1s; }
+    .gemini-logo { width: 100px; margin-top: 20px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 0.8; } }
     
     /* Layout Fixes */
     .block-container { padding-top: 5rem; max-width: 98%; }
@@ -317,18 +348,30 @@ def generate_ai_report(ticker, price, sma, rsi, fg_score, fg_label, news_label):
 def fetch_rss_feed(url):
     try:
         response = requests.get(url, timeout=5)
-        root = ET.fromstring(response.content)
+        content = response.text
+        # Deep Search for Items
         items = []
-        for i in root.findall('.//item')[:10]:
-            title = i.find('title').text
-            link = i.find('link').text
-            # Try find image
+        raw_items = re.findall(r'<item>(.*?)</item>', content, re.DOTALL)
+        for raw in raw_items[:5]: # 5 items per feed
+            title_m = re.search(r'<title>(.*?)</title>', raw, re.DOTALL)
+            link_m = re.search(r'<link>(.*?)</link>', raw, re.DOTALL)
+            
+            # Robust Image Extraction
             img = ""
-            desc = i.find('description').text if i.find('description') is not None else ""
-            if 'src="' in desc:
-                try: img = re.search(r'src="([^"]+)"', desc).group(1)
-                except: pass
-            items.append({'title':title, 'link':link, 'img':img})
+            # 1. Media Content
+            img_m = re.search(r'(?:media:content|media:thumbnail).*?url=["\']([^"\']+\.(?:jpg|jpeg|png))["\']', raw)
+            if not img_m:
+                # 2. Enclosure
+                img_m = re.search(r'<enclosure.*?url=["\']([^"\']+\.(?:jpg|jpeg|png))["\']', raw)
+            if not img_m:
+                # 3. HTML in description
+                img_m = re.search(r'src=["\']([^"\']+\.(?:jpg|jpeg|png))["\']', raw)
+            
+            if title_m and link_m:
+                t = title_m.group(1).replace('<![CDATA[', '').replace(']]>', '').strip()
+                l = link_m.group(1).strip()
+                if img_m: img = img_m.group(1)
+                items.append({'title': t, 'link': l, 'img': img})
         return items
     except: return []
 
@@ -339,7 +382,6 @@ def get_smart_response(query, ticker, data):
     rsi = data['RSI'].iloc[-1] if 'RSI' in data.columns else 50
     sma = data['SMA'].iloc[-1] if 'SMA' in data.columns else latest_price
     trend = "Bullish" if latest_price > sma else "Bearish"
-    
     if "buy" in query or "sell" in query or "forecast" in query:
         signal = "Buy" if rsi < 30 and trend == "Bullish" else "Sell" if rsi > 70 else "Hold"
         return f"Based on technicals, **{ticker}** is currently **{trend}**. RSI is {rsi:.1f}. My automated signal suggests: **{signal}**."
@@ -397,7 +439,6 @@ if mode == "Home":
             if st.button(txt("Delete"), type="primary", use_container_width=True): delete_account()
 
     st.markdown(f"""<div class="hero-container"><div class="homepage-logo">Pro<span>Stock</span></div><p style="font-size:18px; color:#666;">{txt("Hero_Sub")}</p></div>""", unsafe_allow_html=True)
-    
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
         big_search = st.text_input("🔍 " + txt("Search"), placeholder=txt("Search_Ph"), label_visibility="collapsed")
@@ -407,9 +448,7 @@ if mode == "Home":
             st.session_state['ticker_search'] = ticker_res
             st.session_state['mode'] = "Asset Terminal"
             st.rerun()
-
     st.markdown("<br>", unsafe_allow_html=True)
-
     t1, t2, t3, t4 = st.columns(4)
     def render_trend_card(title, assets):
         st.markdown(f"""<div class="trend-card"><div class="trend-header">{title}</div>""", unsafe_allow_html=True)
@@ -418,7 +457,6 @@ if mode == "Home":
             color = "#00C853" if chg >= 0 else "#D50000"
             st.markdown(f"""<div class="trend-item"><span class="trend-name">{name}</span><span class="trend-price" style="color:{color}">{p:,.2f} ({chg:+.2f}%)</span></div>""", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
-
     with t1: render_trend_card(txt("Trend_Stocks"), {"NVIDIA": "NVDA", "Tesla": "TSLA", "Apple": "AAPL", "Samsung": "005930.KS"})
     with t2: render_trend_card(txt("Trend_KR"), {"KOSPI": "^KS11", "KOSDAQ": "^KQ11", "Samsung": "005930.KS", "SK Hynix": "000660.KS"})
     with t3: render_trend_card(txt("Trend_Crypto"), {"Bitcoin": "BTC-USD", "Ethereum": "ETH-USD", "Solana": "SOL-USD", "XRP": "XRP-USD"})
@@ -430,16 +468,9 @@ if mode == "Home":
     
     def render_home_news(url):
         items = fetch_rss_feed(url)
-        for n in items: # Show 5 items
+        for n in items: # Show items
             img_html = f"<div class='news-img-container'><img src='{n['img']}' class='news-img'></div>" if n['img'] else "<div class='news-img-container' style='background:#eee; font-size:20px;'>📰</div>"
-            st.markdown(f"""
-            <a href='{n['link']}' target='_blank' class='news-card-row'>
-                {img_html}
-                <div class='news-content'>
-                    <div class='news-title'>{n['title']}</div>
-                </div>
-            </a>
-            """, unsafe_allow_html=True)
+            st.markdown(f"""<a href='{n['link']}' target='_blank' class='news-card-row'>{img_html}<div class='news-content'><div class='news-title'>{n['title']}</div></div></a>""", unsafe_allow_html=True)
 
     with news_cols[0]: render_home_news("https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664")
     with news_cols[1]: render_home_news("http://rss.cnn.com/rss/money_latest.rss")
@@ -448,20 +479,13 @@ if mode == "Home":
 elif mode == "Asset Terminal":
     main_col, gemini_col = st.columns([3, 1])
     with gemini_col:
-        st.markdown(f"""<div class="gemini-box"><div class="gemini-header">✨ Gemini Assistant</div>""", unsafe_allow_html=True)
-        
-        # Chat History
+        st.markdown(f"""<div class="gemini-box"><div class="gemini-header"><img src="https://upload.wikimedia.org/wikipedia/commons/8/8a/Google_Gemini_logo.svg" class="gemini-logo-icon"> &nbsp;Gemini Analyst</div>""", unsafe_allow_html=True)
         for msg in st.session_state['chat_history'][-4:]:
             bg = "#e7f1ff" if msg['role']=="ai" else "white"
             align = "left" if msg['role']=="ai" else "right"
             st.markdown(f"""<div class="chat-bubble" style="background:{bg}; text-align:{align}"><b>{msg['role'].upper()}:</b> {msg['content']}</div>""", unsafe_allow_html=True)
-        
-        # Chat Input (Callback)
         st.text_input("Ask ProStock AI...", key="chat_input_val", on_change=submit_chat)
-        
         st.markdown("<hr>", unsafe_allow_html=True)
-        
-        # Technical Widget
         current_ticker = st.session_state.get('ticker_search', 'AAPL')
         symbol_for_widget = current_ticker if "-" not in current_ticker else "NASDAQ:AAPL" 
         if current_ticker.endswith("=X"): symbol_for_widget = f"FX:{current_ticker.replace('=X','')}"
@@ -485,7 +509,6 @@ elif mode == "Asset Terminal":
             elif market_type_sel == txt("Commodities"): market_type="Commodities"; ticker = {"Gold":"GC=F","Silver":"SI=F","Oil":"CL=F"}[st.sidebar.selectbox("Select", ["Gold","Silver","Oil"])]
             elif market_type_sel == txt("Forex"): market_type="Currencies/Forex"; ticker = {"USD/KRW":"KRW=X","EUR/USD":"EURUSD=X"}[st.sidebar.selectbox("Select", ["USD/KRW","EUR/USD"])]
             elif market_type_sel == txt("Crypto"): market_type="Crypto"; ticker = {"Bitcoin":"BTC-USD","Ethereum":"ETH-USD"}[st.sidebar.selectbox("Select", ["Bitcoin","Ethereum"])]
-        
         st.session_state['ticker_search'] = ticker
         user_favs = db[st.session_state['user_id']]['favorites']
         is_fav = ticker in user_favs
@@ -493,7 +516,6 @@ elif mode == "Asset Terminal":
             if not is_fav: db[st.session_state['user_id']]['favorites'].append(ticker)
         else:
             if is_fav: db[st.session_state['user_id']]['favorites'].remove(ticker)
-        
         with st.sidebar.expander("⚙️ Chart Settings", expanded=True):
             timeframe = st.selectbox("Interval", ["1 Minute", "5 Minute", "1 Hour", "1 Day"])
             show_sma = st.toggle("SMA", True); show_bb = st.toggle("Bollinger Bands"); show_rsi = st.toggle("RSI")
@@ -523,13 +545,11 @@ elif mode == "Asset Terminal":
                 prev_p = data['Close'].iloc[-2] if len(data)>1 else curr_p
                 chg = curr_p - prev_p
                 pct = (chg/prev_p)*100 if prev_p else 0
-                
                 logo_url = info.get('logo_url', '')
                 if not logo_url and 'website' in info and info['website']:
                     try: domain = info['website'].split('//')[-1].split('/')[0].replace('www.', ''); logo_url = f"https://logo.clearbit.com/{domain}"
                     except: pass
                 logo_html = f'<img src="{logo_url}" class="asset-logo-img">' if logo_url else ''
-                
                 curr_code = info.get('currency', 'USD')
                 try: krw_rate = yf.Ticker("KRW=X").history(period="1d")['Close'].iloc[-1]
                 except: krw_rate = 0
@@ -574,30 +594,17 @@ elif mode == "Asset Terminal":
                     
                     report = generate_ai_report(ticker, curr_p, data['SMA'].iloc[-1], data['RSI'].iloc[-1], fear_score, fg_label, "Neutral")
                     st.markdown(f"""<div style="background:#f8f9fa; padding:20px; border-radius:5px; border-left:4px solid #0d6efd;">{report.replace(chr(10), '<br>')}</div>""", unsafe_allow_html=True)
-                    
+                
                 with tabs[2]:
                     if news:
                         for i in news[:10]:
                             t = safe_extract_news_title(i) or "News"; l = i.get('link') or "#"
-                            # Extract Image
+                            if 'clickThroughUrl' in i and isinstance(i['clickThroughUrl'], dict): l = i['clickThroughUrl'].get('url', l)
                             img_url = ""
                             try: img_url = i.get('thumbnail', {}).get('resolutions', [{}])[0].get('url', '')
                             except: pass
-                            
-                            if 'clickThroughUrl' in i and isinstance(i['clickThroughUrl'], dict): l = i['clickThroughUrl'].get('url', l)
-                            
-                            # Render Card (Asset Terminal)
                             img_html = f"<div class='news-img-container'><img src='{img_url}' class='news-img'></div>" if img_url else "<div class='news-img-container' style='background:#eee; color:#999; font-size:20px;'>📰</div>"
-                            
-                            st.markdown(f"""
-                            <a href='{l}' target='_blank' class='news-card-row'>
-                                {img_html}
-                                <div class='news-content'>
-                                    <div class='news-title'>{t}</div>
-                                    <div class='news-meta'>{i.get('publisher', 'Yahoo Finance')} • {datetime.fromtimestamp(i.get('providerPublishTime', 0)).strftime('%H:%M')}</div>
-                                </div>
-                            </a>
-                            """, unsafe_allow_html=True)
+                            st.markdown(f"""<a href='{l}' target='_blank' class='news-card-row'>{img_html}<div class='news-content'><div class='news-title'>{t}</div><div class='news-meta'>Yahoo Finance</div></div></a>""", unsafe_allow_html=True)
                 with tabs[3]:
                     st.dataframe(data.tail(50), use_container_width=True)
                     csv = data.to_csv().encode('utf-8')
@@ -649,26 +656,4 @@ elif mode == "Media & News":
 # --- MODE: MAP ---
 elif mode == "Map":
     st.title("🗺️ S&P 500 Map")
-    components.html("""
-    <div class="tradingview-widget-container">
-      <div class="tradingview-widget-container__widget"></div>
-      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-stock-heatmap.js" async>
-      {
-      "exchanges": [],
-      "dataSource": "SPX500",
-      "grouping": "sector",
-      "blockSize": "market_cap_basic",
-      "blockColor": "change",
-      "locale": "en",
-      "symbolUrl": "",
-      "colorTheme": "light",
-      "hasTopBar": false,
-      "isDataSetEnabled": false,
-      "isZoomEnabled": true,
-      "hasSymbolTooltip": true,
-      "width": "100%",
-      "height": "800"
-    }
-      </script>
-    </div>
-    """, height=810)
+    components.html("""<div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-stock-heatmap.js" async>{"exchanges": [],"dataSource": "SPX500","grouping": "sector","blockSize": "market_cap_basic","blockColor": "change","locale": "en","symbolUrl": "","colorTheme": "light","hasTopBar": false,"isDataSetEnabled": false,"isZoomEnabled": true,"hasSymbolTooltip": true,"width": "100%","height": "800"}</script></div>""", height=810)
