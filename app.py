@@ -64,31 +64,19 @@ st.markdown("""
     .stat-label { color: #888; font-size: 12px; }
     .stat-value { font-weight: 600; color: #333; }
     
-    /* News Feed (Yahoo Style) */
+    /* News Feed (Clean Text Style) */
     .news-card-row {
         display: flex;
         flex-direction: row;
         background: white;
         border-bottom: 1px solid #eee;
-        padding: 15px 0;
+        padding: 15px;
         text-decoration: none;
-        align-items: start;
+        align-items: center;
         transition: background-color 0.2s;
-        min-height: 100px;
+        border-left: 3px solid transparent;
     }
-    .news-card-row:hover { background-color: #fcfcfc; }
-    .news-img-container {
-        width: 120px;
-        height: 80px;
-        flex-shrink: 0;
-        margin-right: 15px;
-        border-radius: 8px;
-        overflow: hidden;
-        background-color: #f8f9fa;
-        display: flex; align-items: center; justify-content: center;
-        border: 1px solid #eee;
-    }
-    .news-img { width: 100%; height: 100%; object-fit: cover; }
+    .news-card-row:hover { background-color: #fcfcfc; border-left: 3px solid #0d6efd; }
     .news-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
     .news-title { font-size: 15px; font-weight: 600; color: #1a0dab; line-height: 1.4; margin-bottom: 5px; text-decoration: none; display: block;}
     .news-meta { font-size: 12px; color: #666; }
@@ -134,7 +122,9 @@ if 'mode' not in st.session_state: st.session_state['mode'] = "Home"
 if 'ticker_search' not in st.session_state: st.session_state['ticker_search'] = ""
 if 'lang' not in st.session_state: st.session_state['lang'] = "English"
 if 'chat_history' not in st.session_state: st.session_state['chat_history'] = []
-if 'gemini_api_key' not in st.session_state: st.session_state['gemini_api_key'] = ""
+if 'gemini_api_key' not in st.session_state: 
+    # Set default API Key provided by user
+    st.session_state['gemini_api_key'] = "AIzaSyB-RYuBGcCseCvU0a5EXlR8aB1V7KvzDeU"
 
 # --- TRANSLATION DICTIONARY ---
 TRANS = {
@@ -354,16 +344,10 @@ def fetch_rss_feed(url):
         for raw in raw_items[:5]: 
             title_m = re.search(r'<title>(.*?)</title>', raw, re.DOTALL)
             link_m = re.search(r'<link>(.*?)</link>', raw, re.DOTALL)
-            img = ""
-            img_m = re.search(r'(?:media:content|media:thumbnail).*?url=["\']([^"\']+\.(?:jpg|jpeg|png))["\']', raw)
-            if not img_m: img_m = re.search(r'<enclosure.*?url=["\']([^"\']+\.(?:jpg|jpeg|png))["\']', raw)
-            if not img_m: img_m = re.search(r'src=["\']([^"\']+\.(?:jpg|jpeg|png))["\']', raw)
-            if img_m: img = img_m.group(1)
-            
             if title_m and link_m:
                 t = title_m.group(1).replace('<![CDATA[', '').replace(']]>', '').strip()
                 l = link_m.group(1).strip()
-                items.append({'title': t, 'link': l, 'img': img})
+                items.append({'title': t, 'link': l})
         return items
     except: return []
 
@@ -386,24 +370,18 @@ def call_gemini_api(prompt, api_key):
 
 def get_smart_response(query, ticker, data, api_key):
     if not api_key:
-        # Fallback to rule-based if no key
-        query = query.lower()
-        latest_price = data['Close'].iloc[-1]
-        rsi = data['RSI'].iloc[-1] if 'RSI' in data.columns else 50
-        sma = data['SMA'].iloc[-1] if 'SMA' in data.columns else latest_price
-        trend = "Bullish" if latest_price > sma else "Bearish"
-        
-        if "buy" in query or "sell" in query:
-            return f"**(Mock AI):** Based on RSI {rsi:.0f} and {trend} trend, consider { 'Buying' if trend=='Bullish' else 'Selling' }."
-        return f"**(Mock AI):** {ticker} is currently {trend} at {latest_price:.2f}. (Enter API Key for Real AI)"
+        return "⚠️ API Key missing. Please check settings."
 
-    # REAL AI PROMPT
-    latest = data.iloc[-1]
+    # Check for data availability
+    latest_price = data['Close'].iloc[-1] if not data.empty else "N/A"
+    rsi_val = f"{data['RSI'].iloc[-1]:.2f}" if 'RSI' in data.columns and not pd.isna(data['RSI'].iloc[-1]) else "N/A"
+    sma_val = f"{data['SMA'].iloc[-1]:.2f}" if 'SMA' in data.columns and not pd.isna(data['SMA'].iloc[-1]) else "N/A"
+
     prompt = f"""
     You are a professional financial analyst. Analyze {ticker} based on this real-time data:
-    - Price: {latest['Close']:.2f}
-    - RSI (14): {latest['RSI']:.2f} if 'RSI' in data.columns else 'N/A'
-    - SMA (20): {latest['SMA']:.2f} if 'SMA' in data.columns else 'N/A'
+    - Price: {latest_price}
+    - RSI (14): {rsi_val}
+    - SMA (20): {sma_val}
     
     User Question: "{query}"
     
@@ -420,12 +398,14 @@ def submit_chat():
         try: 
             d = yf.download(ticker, period="1mo", interval="1d", progress=False)
             d = calculate_technicals(d)
-        except: d = pd.DataFrame({'Close': [0]})
+        except: d = pd.DataFrame()
         
         api_key = st.session_state.get('gemini_api_key', '')
-        response = get_smart_response(user_input, ticker, d, api_key)
         
-        st.session_state.chat_history.append({"role": "ai", "content": response})
+        with st.spinner("AI Thinking..."):
+            response = get_smart_response(user_input, ticker, d, api_key)
+            st.session_state.chat_history.append({"role": "ai", "content": response})
+        
         st.session_state.chat_input_val = "" 
 
 # --- NAVIGATION ---
@@ -492,8 +472,7 @@ if mode == "Home":
     def render_home_news(url):
         items = fetch_rss_feed(url)
         for n in items: 
-            img_html = f"<div class='news-img-container'><img src='{n['img']}' class='news-img'></div>" if n['img'] else "<div class='news-img-container' style='background:#eee; font-size:20px;'>📰</div>"
-            st.markdown(f"""<a href='{n['link']}' target='_blank' class='news-card-row'>{img_html}<div class='news-content'><div class='news-title'>{n['title']}</div></div></a>""", unsafe_allow_html=True)
+            st.markdown(f"""<a href='{n['link']}' target='_blank' class='news-card-row'><div class='news-content'><div class='news-title'>{n['title']}</div></div></a>""", unsafe_allow_html=True)
     with news_cols[0]: render_home_news("https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664")
     with news_cols[1]: render_home_news("http://rss.cnn.com/rss/money_latest.rss")
 
@@ -504,14 +483,19 @@ elif mode == "Asset Terminal":
         st.markdown(f"""<div class="gemini-box"><div class="gemini-header"><img src="https://upload.wikimedia.org/wikipedia/commons/8/8a/Google_Gemini_logo.svg" class="gemini-logo-icon"> &nbsp;Gemini Analyst</div>""", unsafe_allow_html=True)
         
         # API KEY INPUT
-        api_key = st.text_input("Enter Gemini API Key", type="password", key="gemini_api_key", help="Get from Google AI Studio")
-        
+        st.text_input("API Key", value=st.session_state.get('gemini_api_key', ''), type="password", key="gemini_api_key", label_visibility="collapsed")
+
         for msg in st.session_state['chat_history'][-4:]:
             bg = "#e7f1ff" if msg['role']=="ai" else "white"
             align = "left" if msg['role']=="ai" else "right"
             st.markdown(f"""<div class="chat-bubble" style="background:{bg}; text-align:{align}"><b>{msg['role'].upper()}:</b> {msg['content']}</div>""", unsafe_allow_html=True)
         st.text_input("Ask ProStock AI...", key="chat_input_val", on_change=submit_chat)
         st.markdown("<hr>", unsafe_allow_html=True)
+        current_ticker = st.session_state.get('ticker_search', 'AAPL')
+        symbol_for_widget = current_ticker if "-" not in current_ticker else "NASDAQ:AAPL" 
+        if current_ticker.endswith("=X"): symbol_for_widget = f"FX:{current_ticker.replace('=X','')}"
+        if current_ticker.endswith("-USD"): symbol_for_widget = f"COINBASE:{current_ticker.replace('-USD','')}USD"
+        components.html(f"""<div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>{{"interval": "1m","width": "100%","isTransparent": true,"height": "450","symbol": "{symbol_for_widget}","showIntervalTabs": true,"displayMode": "single","locale": "en","colorTheme": "light"}}</script></div>""", height=460)
 
     with main_col:
         default_ticker = st.session_state.get('ticker_search', "")
@@ -599,32 +583,6 @@ elif mode == "Asset Terminal":
                 with tabs[1]:
                     try: vix = yf.Ticker("^VIX").history(period="5d")['Close'].iloc[-1]; fear_score = max(0, min(100, 100 - (vix - 10) * 2.5)); fg_label = "Fear" if fear_score < 45 else "Greed"
                     except: fear_score=50; fg_label="Neutral"
-                    
-                    # BUY/SELL GAUGE (TRADINGVIEW WIDGET) RESTORED & RELOCATED HERE
-                    current_ticker = st.session_state.get('ticker_search', 'AAPL')
-                    symbol_for_widget = current_ticker if "-" not in current_ticker else "NASDAQ:AAPL" 
-                    if current_ticker.endswith("=X"): symbol_for_widget = f"FX:{current_ticker.replace('=X','')}"
-                    if current_ticker.endswith("-USD"): symbol_for_widget = f"COINBASE:{current_ticker.replace('-USD','')}USD"
-                    
-                    st.markdown("### 🚦 Technical Analysis Signal")
-                    components.html(f"""<div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>{{"interval": "1m","width": "100%","isTransparent": true,"height": "450","symbol": "{symbol_for_widget}","showIntervalTabs": true,"displayMode": "single","locale": "en","colorTheme": "light"}}</script></div>""", height=460)
-                    
-                    st.markdown("---")
-                    
-                    # RESTORED FORECAST CHART
-                    st.markdown("### 🔮 Price Forecast (Linear Regression)")
-                    if len(data) > 30:
-                        df_ml = data[['Close']].dropna().reset_index(); df_ml['i'] = df_ml.index
-                        model = LinearRegression().fit(df_ml[['i']], df_ml['Close'])
-                        fut_x = np.arange(df_ml['i'].iloc[-1]+1, df_ml['i'].iloc[-1]+31).reshape(-1,1)
-                        pred = model.predict(fut_x)
-                        fig_p = go.Figure()
-                        fig_p.add_trace(go.Scatter(x=df_ml['i'][-50:], y=df_ml['Close'][-50:], name='History'))
-                        fig_p.add_trace(go.Scatter(x=fut_x.flatten(), y=pred, name='Forecast', line=dict(dash='dash', color='red')))
-                        fig_p.update_layout(height=250, margin=dict(l=0,r=0,t=20,b=0), template="plotly_white", title="30-Period Price Forecast"); st.plotly_chart(fig_p, use_container_width=True)
-                        st.caption(f"Projected Trend: **{curr_code} {pred[-1]:.2f}**")
-                    else: st.warning("Insufficient data for forecast")
-                    
                     report = generate_ai_report(ticker, curr_p, data['SMA'].iloc[-1], data['RSI'].iloc[-1], fear_score, fg_label, "Neutral")
                     st.markdown(f"""<div style="background:#f8f9fa; padding:20px; border-radius:5px; border-left:4px solid #0d6efd;">{report.replace(chr(10), '<br>')}</div>""", unsafe_allow_html=True)
                     
@@ -633,11 +591,7 @@ elif mode == "Asset Terminal":
                         for i in news[:10]:
                             t = safe_extract_news_title(i) or "News"; l = i.get('link') or "#"
                             if 'clickThroughUrl' in i and isinstance(i['clickThroughUrl'], dict): l = i['clickThroughUrl'].get('url', l)
-                            img_url = ""
-                            try: img_url = i.get('thumbnail', {}).get('resolutions', [{}])[0].get('url', '')
-                            except: pass
-                            img_html = f"<div class='news-img-container'><img src='{img_url}' class='news-img'></div>" if img_url else "<div class='news-img-container' style='background:#eee; color:#999; font-size:20px;'>📰</div>"
-                            st.markdown(f"""<a href='{l}' target='_blank' class='news-card-row'>{img_html}<div class='news-content'><div class='news-title'>{t}</div><div class='news-meta'>Yahoo Finance</div></div></a>""", unsafe_allow_html=True)
+                            st.markdown(f"""<a href='{l}' target='_blank' class='news-card-row'><div class='news-content'><div class='news-title'>{t}</div><div class='news-meta'>Yahoo Finance</div></div></a>""", unsafe_allow_html=True)
                 with tabs[3]:
                     st.dataframe(data.tail(50), use_container_width=True)
                     csv = data.to_csv().encode('utf-8')
