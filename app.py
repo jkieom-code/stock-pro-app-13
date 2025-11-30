@@ -114,8 +114,6 @@ st.markdown("""
     
     /* Loading */
     .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; animation: fadein 1s; }
-    .gemini-logo { width: 100px; margin-top: 20px; animation: pulse 2s infinite; }
-    @keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 0.8; } }
     
     /* Layout Fixes */
     .block-container { padding-top: 5rem; max-width: 98%; }
@@ -349,28 +347,29 @@ def fetch_rss_feed(url):
     try:
         response = requests.get(url, timeout=5)
         content = response.text
-        # Deep Search for Items
         items = []
         raw_items = re.findall(r'<item>(.*?)</item>', content, re.DOTALL)
-        for raw in raw_items[:5]: # 5 items per feed
+        for raw in raw_items[:5]: 
             title_m = re.search(r'<title>(.*?)</title>', raw, re.DOTALL)
             link_m = re.search(r'<link>(.*?)</link>', raw, re.DOTALL)
-            
-            # Robust Image Extraction
+            # Robust Image Search
             img = ""
-            # 1. Media Content
             img_m = re.search(r'(?:media:content|media:thumbnail).*?url=["\']([^"\']+\.(?:jpg|jpeg|png))["\']', raw)
-            if not img_m:
-                # 2. Enclosure
-                img_m = re.search(r'<enclosure.*?url=["\']([^"\']+\.(?:jpg|jpeg|png))["\']', raw)
-            if not img_m:
-                # 3. HTML in description
-                img_m = re.search(r'src=["\']([^"\']+\.(?:jpg|jpeg|png))["\']', raw)
+            if not img_m: img_m = re.search(r'<enclosure.*?url=["\']([^"\']+\.(?:jpg|jpeg|png))["\']', raw)
+            if not img_m: img_m = re.search(r'src=["\']([^"\']+\.(?:jpg|jpeg|png))["\']', raw)
+            if img_m: img = img_m.group(1)
             
+            # Keyword Fallback
+            if not img and title_m:
+                t_low = title_m.group(1).lower()
+                if "bitcoin" in t_low: img="https://upload.wikimedia.org/wikipedia/commons/4/46/Bitcoin.svg"
+                elif "apple" in t_low: img="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg"
+                elif "tesla" in t_low: img="https://upload.wikimedia.org/wikipedia/commons/e/e8/Tesla_logo.png"
+                elif "market" in t_low: img="https://cdn-icons-png.flaticon.com/512/3310/3310624.png"
+
             if title_m and link_m:
                 t = title_m.group(1).replace('<![CDATA[', '').replace(']]>', '').strip()
                 l = link_m.group(1).strip()
-                if img_m: img = img_m.group(1)
                 items.append({'title': t, 'link': l, 'img': img})
         return items
     except: return []
@@ -382,6 +381,7 @@ def get_smart_response(query, ticker, data):
     rsi = data['RSI'].iloc[-1] if 'RSI' in data.columns else 50
     sma = data['SMA'].iloc[-1] if 'SMA' in data.columns else latest_price
     trend = "Bullish" if latest_price > sma else "Bearish"
+    
     if "buy" in query or "sell" in query or "forecast" in query:
         signal = "Buy" if rsi < 30 and trend == "Bullish" else "Sell" if rsi > 70 else "Hold"
         return f"Based on technicals, **{ticker}** is currently **{trend}**. RSI is {rsi:.1f}. My automated signal suggests: **{signal}**."
@@ -449,6 +449,7 @@ if mode == "Home":
             st.session_state['mode'] = "Asset Terminal"
             st.rerun()
     st.markdown("<br>", unsafe_allow_html=True)
+
     t1, t2, t3, t4 = st.columns(4)
     def render_trend_card(title, assets):
         st.markdown(f"""<div class="trend-card"><div class="trend-header">{title}</div>""", unsafe_allow_html=True)
@@ -457,6 +458,7 @@ if mode == "Home":
             color = "#00C853" if chg >= 0 else "#D50000"
             st.markdown(f"""<div class="trend-item"><span class="trend-name">{name}</span><span class="trend-price" style="color:{color}">{p:,.2f} ({chg:+.2f}%)</span></div>""", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
+
     with t1: render_trend_card(txt("Trend_Stocks"), {"NVIDIA": "NVDA", "Tesla": "TSLA", "Apple": "AAPL", "Samsung": "005930.KS"})
     with t2: render_trend_card(txt("Trend_KR"), {"KOSPI": "^KS11", "KOSDAQ": "^KQ11", "Samsung": "005930.KS", "SK Hynix": "000660.KS"})
     with t3: render_trend_card(txt("Trend_Crypto"), {"Bitcoin": "BTC-USD", "Ethereum": "ETH-USD", "Solana": "SOL-USD", "XRP": "XRP-USD"})
@@ -468,7 +470,7 @@ if mode == "Home":
     
     def render_home_news(url):
         items = fetch_rss_feed(url)
-        for n in items: # Show items
+        for n in items: 
             img_html = f"<div class='news-img-container'><img src='{n['img']}' class='news-img'></div>" if n['img'] else "<div class='news-img-container' style='background:#eee; font-size:20px;'>📰</div>"
             st.markdown(f"""<a href='{n['link']}' target='_blank' class='news-card-row'>{img_html}<div class='news-content'><div class='news-title'>{n['title']}</div></div></a>""", unsafe_allow_html=True)
 
@@ -478,14 +480,40 @@ if mode == "Home":
 # --- MODE: ASSET TERMINAL ---
 elif mode == "Asset Terminal":
     main_col, gemini_col = st.columns([3, 1])
+    
+    # AI Sidebar
     with gemini_col:
         st.markdown(f"""<div class="gemini-box"><div class="gemini-header"><img src="https://upload.wikimedia.org/wikipedia/commons/8/8a/Google_Gemini_logo.svg" class="gemini-logo-icon"> &nbsp;Gemini Analyst</div>""", unsafe_allow_html=True)
+        
+        # Render history
         for msg in st.session_state['chat_history'][-4:]:
             bg = "#e7f1ff" if msg['role']=="ai" else "white"
             align = "left" if msg['role']=="ai" else "right"
             st.markdown(f"""<div class="chat-bubble" style="background:{bg}; text-align:{align}"><b>{msg['role'].upper()}:</b> {msg['content']}</div>""", unsafe_allow_html=True)
-        st.text_input("Ask ProStock AI...", key="chat_input_val", on_change=submit_chat)
+        
+        # FORM for input (Fixes "No Reply" issue)
+        with st.form(key='chat_form', clear_on_submit=True):
+            user_input = st.text_input("Ask ProStock AI...", placeholder="e.g. Forecast?")
+            submit_button = st.form_submit_button(label='Send')
+        
+        if submit_button and user_input:
+            st.session_state.chat_history.append({"role": "user", "content": user_input})
+            
+            # Thinking Indicator
+            with st.spinner("Analyzing data..."):
+                # Get context data
+                ticker = st.session_state.get('ticker_search', 'Unknown')
+                try: 
+                    d = yf.download(ticker, period="1mo", interval="1d", progress=False)
+                    d = calculate_technicals(d)
+                except: d = pd.DataFrame({'Close': [0], 'RSI': [50], 'SMA': [0]})
+                
+                response = get_smart_response(user_input, ticker, d)
+                st.session_state.chat_history.append({"role": "ai", "content": response})
+                st.rerun() # Force refresh to show answer
+
         st.markdown("<hr>", unsafe_allow_html=True)
+        # Technical Widget
         current_ticker = st.session_state.get('ticker_search', 'AAPL')
         symbol_for_widget = current_ticker if "-" not in current_ticker else "NASDAQ:AAPL" 
         if current_ticker.endswith("=X"): symbol_for_widget = f"FX:{current_ticker.replace('=X','')}"
@@ -594,7 +622,7 @@ elif mode == "Asset Terminal":
                     
                     report = generate_ai_report(ticker, curr_p, data['SMA'].iloc[-1], data['RSI'].iloc[-1], fear_score, fg_label, "Neutral")
                     st.markdown(f"""<div style="background:#f8f9fa; padding:20px; border-radius:5px; border-left:4px solid #0d6efd;">{report.replace(chr(10), '<br>')}</div>""", unsafe_allow_html=True)
-                
+                    
                 with tabs[2]:
                     if news:
                         for i in news[:10]:
@@ -604,7 +632,15 @@ elif mode == "Asset Terminal":
                             try: img_url = i.get('thumbnail', {}).get('resolutions', [{}])[0].get('url', '')
                             except: pass
                             img_html = f"<div class='news-img-container'><img src='{img_url}' class='news-img'></div>" if img_url else "<div class='news-img-container' style='background:#eee; color:#999; font-size:20px;'>📰</div>"
-                            st.markdown(f"""<a href='{l}' target='_blank' class='news-card-row'>{img_html}<div class='news-content'><div class='news-title'>{t}</div><div class='news-meta'>Yahoo Finance</div></div></a>""", unsafe_allow_html=True)
+                            st.markdown(f"""
+                            <a href='{l}' target='_blank' class='news-card-row'>
+                                {img_html}
+                                <div class='news-content'>
+                                    <div class='news-title'>{t}</div>
+                                    <div class='news-meta'>{i.get('publisher', 'Yahoo Finance')} • {datetime.fromtimestamp(i.get('providerPublishTime', 0)).strftime('%H:%M')}</div>
+                                </div>
+                            </a>
+                            """, unsafe_allow_html=True)
                 with tabs[3]:
                     st.dataframe(data.tail(50), use_container_width=True)
                     csv = data.to_csv().encode('utf-8')
@@ -657,3 +693,28 @@ elif mode == "Media & News":
 elif mode == "Map":
     st.title("🗺️ S&P 500 Map")
     components.html("""<div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-stock-heatmap.js" async>{"exchanges": [],"dataSource": "SPX500","grouping": "sector","blockSize": "market_cap_basic","blockColor": "change","locale": "en","symbolUrl": "","colorTheme": "light","hasTopBar": false,"isDataSetEnabled": false,"isZoomEnabled": true,"hasSymbolTooltip": true,"width": "100%","height": "800"}</script></div>""", height=810)
+    
+    st.markdown("---")
+    st.subheader("⚡ Instant Access: Top 30 Market Movers")
+    
+    # Hardcoded list of Top S&P 500 Components for Quick Access Grid
+    top_tickers = ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA", "BRK-B", "LLY", "AVGO", "JPM", "V", "UNH", "MA", "XOM", "JNJ", "PG", "HD", "COST", "ABBV", "MRK", "CRM", "AMD", "PEP", "KO", "BAC", "WMT", "CVX", "TMO", "CSCO"]
+    
+    cols = st.columns(6)
+    for i, t in enumerate(top_tickers):
+        with cols[i % 6]:
+            # Simple price fetch for grid
+            try: 
+                d = yf.Ticker(t).history(period="1d")
+                p = d['Close'].iloc[-1]
+                c = ((p - d['Open'].iloc[0]) / d['Open'].iloc[0]) * 100
+                color = "green" if c >= 0 else "red"
+                label = f"{t}\n{c:+.1f}%"
+            except:
+                label = t
+                color = "gray"
+            
+            if st.button(label, key=f"map_btn_{t}", use_container_width=True):
+                st.session_state['ticker_search'] = t
+                st.session_state['mode'] = "Asset Terminal"
+                st.rerun()
