@@ -25,8 +25,6 @@ st.set_page_config(
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&display=swap'); /* Stylish font */
-
     html, body, [class*="css"] { font-family: 'Roboto', sans-serif; }
     .stApp { background-color: #ffffff; color: #333333; }
     
@@ -66,10 +64,10 @@ st.markdown("""
     .stat-label { color: #888; font-size: 12px; }
     .stat-value { font-weight: 600; color: #333; }
     
-    /* News Feed (Clean Text Style) */
+    /* News Feed (Clean Text Style - No Images) */
     .news-card-row {
         display: flex;
-        flex-direction: column;
+        flex-direction: column; /* Stack vertically for text only */
         background: white;
         border-bottom: 1px solid #eee;
         padding: 15px;
@@ -128,7 +126,7 @@ st.markdown("""
         color: white;
         font-size: 56px;
         font-weight: 700;
-        font-family: 'Playfair Display', serif;
+        font-family: Georgia, serif; /* Georgia Font as requested */
         font-style: italic;
         text-align: center;
         text-shadow: 0 2px 10px rgba(0,0,0,0.8);
@@ -158,6 +156,7 @@ if 'ticker_search' not in st.session_state: st.session_state['ticker_search'] = 
 if 'lang' not in st.session_state: st.session_state['lang'] = "English"
 if 'chat_history' not in st.session_state: st.session_state['chat_history'] = []
 if 'gemini_api_key' not in st.session_state: 
+    # Set default API Key provided by user
     st.session_state['gemini_api_key'] = "AIzaSyB-RYuBGcCseCvU0a5EXlR8aB1V7KvzDeU"
 
 # --- TRANSLATION DICTIONARY ---
@@ -393,21 +392,25 @@ def fetch_rss_feed(url):
 
 # --- REAL GEMINI AI ---
 def call_gemini_api(prompt, api_key):
-    # Use generic model name as it's safer across regions
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    # Model Fallback Sequence
+    models = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"]
+    
     headers = {'Content-Type': 'application/json'}
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {"maxOutputTokens": 300}
     }
-    try:
-        r = requests.post(url, headers=headers, json=payload)
-        if r.status_code == 200:
-            return r.json()['candidates'][0]['content']['parts'][0]['text']
-        # Fallback to Simulated AI if 404 or error (graceful degradation)
-        return "AI Service Busy (Simulated): Based on technical indicators, the asset shows standard volatility patterns. RSI and SMA levels suggest a neutral to bullish bias in the short term."
-    except Exception:
-        return "Connection Error. Displaying cached analysis."
+
+    for model in models:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+        try:
+            r = requests.post(url, headers=headers, json=payload)
+            if r.status_code == 200:
+                return r.json()['candidates'][0]['content']['parts'][0]['text']
+        except:
+            continue
+            
+    return "AI Service Unavailable. Please check API Key or try again later."
 
 def get_smart_response(query, ticker, data, api_key):
     if not api_key:
@@ -479,9 +482,16 @@ mode = st.session_state['mode']
 if mode == "Home":
     # Guest Mode Header Check
     if st.session_state.get('guest_mode', False):
+        # CSS for removing sidebar in guest mode
+        st.markdown("""
+            <style>
+            [data-testid="stSidebar"] { display: none; }
+            </style>
+        """, unsafe_allow_html=True)
+
         # GUEST HOME HEADER
         h1, h2, h3 = st.columns([1,2,1])
-        with h1: st.markdown('<div class="prostock-logo" style="font-size:24px;">Pro<span>Stock</span></div>', unsafe_allow_html=True)
+        with h1: st.markdown('<div style="font-size: 40px; font-weight:900; color: #0d6efd; line-height: 1;">Pro<span style="color:#333;">Stock</span></div>', unsafe_allow_html=True)
         with h2: 
              q = st.text_input("Search", placeholder=txt("Search_Ph"), label_visibility="collapsed")
              if q:
@@ -501,7 +511,7 @@ if mode == "Home":
         # GUEST HERO
         st.markdown(f"""
         <div class="guest-hero">
-            <div class="guest-hero-text">World-leading BETA version of stock viewer</div>
+            <div class="guest-hero-text">Market Intelligence for the Modern Investor</div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -716,17 +726,14 @@ elif mode == "Asset Terminal":
 # --- MODE: FAVORITES ---
 elif mode == "Favorites":
     st.title(txt("Watchlist"))
-    if st.session_state.get('guest_mode', False):
-        st.info("Favorites are not available in Guest Mode.")
+    user_favs = db[st.session_state['user_id']]['favorites']
+    if not user_favs: st.info("No favorites.")
     else:
-        user_favs = db[st.session_state['user_id']]['favorites']
-        if not user_favs: st.info("No favorites.")
-        else:
-            favs = []
-            for s in user_favs:
-                p, c = get_live_price(s)
-                favs.append({"Ticker": s, "Price": f"${p:,.2f}", "Change": f"{c:+.2f}%"})
-            st.dataframe(pd.DataFrame(favs), use_container_width=True)
+        favs = []
+        for s in user_favs:
+            p, c = get_live_price(s)
+            favs.append({"Ticker": s, "Price": f"${p:,.2f}", "Change": f"{c:+.2f}%"})
+        st.dataframe(pd.DataFrame(favs), use_container_width=True)
 
 # --- MODE: MEDIA ---
 elif mode == "Media & News":
