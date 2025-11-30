@@ -10,6 +10,7 @@ import requests
 import xml.etree.ElementTree as ET
 import time
 import streamlit.components.v1 as components
+import re
 
 # --- Configuration ---
 st.set_page_config(
@@ -36,17 +37,50 @@ st.markdown("""
     /* Homepage Elements */
     .hero-container { padding: 20px 20px; text-align: center; }
     
-    /* Trending Cards */
+    /* Improved Trending Cards */
     .trend-card {
-        background: white; border: 1px solid #eee; border-radius: 8px; padding: 15px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s; height: 100%;
+        background: white; 
+        border: 1px solid #f0f0f0; 
+        border-radius: 12px; 
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
+        transition: all 0.3s ease; 
+        height: 100%;
+        position: relative;
+        overflow: hidden;
     }
-    .trend-card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.1); transform: translateY(-2px); }
-    .trend-header { font-size: 14px; color: #666; font-weight: 700; margin-bottom: 10px; text-transform: uppercase; border-bottom: 2px solid #f0f0f0; padding-bottom: 5px; }
-    .trend-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f8f9fa; font-size: 13px; }
+    .trend-card:hover { 
+        box-shadow: 0 8px 20px rgba(13, 110, 253, 0.1); 
+        transform: translateY(-3px); 
+        border-color: #0d6efd;
+    }
+    .trend-header { 
+        font-size: 16px; 
+        color: #333; 
+        font-weight: 800; 
+        margin-bottom: 15px; 
+        display: flex; 
+        align-items: center; 
+        gap: 8px;
+        border-bottom: 2px solid #f8f9fa;
+        padding-bottom: 10px;
+    }
+    .trend-item { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center;
+        padding: 10px 0; 
+        border-bottom: 1px solid #f8f9fa; 
+        font-size: 14px; 
+    }
     .trend-item:last-child { border-bottom: none; }
-    .trend-name { font-weight: 500; color: #0d6efd; }
-    .trend-price { font-weight: 600; }
+    .trend-name { font-weight: 600; color: #555; }
+    .trend-price-badge { 
+        font-weight: 700; 
+        padding: 4px 8px; 
+        border-radius: 6px; 
+        font-size: 12px;
+    }
     
     /* Account Top Right */
     .account-bar { display: flex; justify-content: flex-end; align-items: center; gap: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; margin-bottom: 20px; }
@@ -62,11 +96,34 @@ st.markdown("""
     .stat-label { color: #888; font-size: 12px; }
     .stat-value { font-weight: 600; color: #333; }
     
-    /* News */
-    .news-list-item { padding: 12px 0; border-bottom: 1px solid #eee; display: flex; flex-direction: column; }
-    .news-link { font-size: 15px; font-weight: 500; color: #1a0dab; text-decoration: none; }
-    .news-meta { font-size: 11px; color: #999; margin-bottom: 4px; }
-
+    /* News Feed (Yahoo Style) */
+    .news-card-row {
+        display: flex;
+        flex-direction: row;
+        background: white;
+        border-bottom: 1px solid #eee;
+        padding: 15px 0;
+        text-decoration: none;
+        align-items: start;
+        transition: background-color 0.2s;
+    }
+    .news-card-row:hover { background-color: #fcfcfc; }
+    .news-img-container {
+        width: 120px;
+        height: 80px;
+        flex-shrink: 0;
+        margin-right: 15px;
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: #f8f9fa;
+        display: flex; align-items: center; justify-content: center;
+        border: 1px solid #eee;
+    }
+    .news-img { width: 100%; height: 100%; object-fit: cover; }
+    .news-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+    .news-title { font-size: 15px; font-weight: 600; color: #1a0dab; line-height: 1.4; margin-bottom: 5px; text-decoration: none; display: block;}
+    .news-meta { font-size: 12px; color: #666; }
+    
     /* Gemini Sidebar */
     .gemini-box {
         background-color: #f8f9fa;
@@ -82,6 +139,7 @@ st.markdown("""
     .chat-bubble {
         background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px;
         box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-size: 13px;
+        border: 1px solid #eee;
     }
     
     /* Loading */
@@ -209,13 +267,10 @@ def get_live_price(ticker):
         if not price:
             d = yf.Ticker(ticker).history(period="1d")
             if not d.empty: price = d['Close'].iloc[-1]
-        
-        # Estimate change if not available
         prev = info.get('previousClose')
         if not prev:
             d = yf.Ticker(ticker).history(period="5d")
             if len(d) > 1: prev = d['Close'].iloc[-2]
-            
         change = ((price - prev)/prev)*100 if price and prev else 0.0
         return price or 0.0, change
     except: return 0.0, 0.0
@@ -225,10 +280,8 @@ def get_stock_data(ticker, interval, period, start=None, end=None):
     try:
         if interval in ['1m', '5m', '1h'] and period == '1d': period = "5d"
         if interval == "1d" and end: end = end + timedelta(days=1)
-        
         if interval == "1d": data = yf.download(ticker, start=start, end=end, interval=interval, progress=False)
         else: data = yf.download(ticker, period=period, interval=interval, progress=False)
-        
         if (data.empty or len(data)<2) and period=="1d":
             data = yf.download(ticker, period="5d", interval=interval, progress=False)
         if 'Volume' in data.columns: data = data[data['Volume']>0]
@@ -310,21 +363,51 @@ def analyze_news_sentiment(news_items):
     else: label = "Neutral"
     return pos, neg, neu, label
 
-def generate_ai_report(ticker, price, sma, rsi, fg_score, fg_label, news_label):
-    report = f"### 🧠 AI Executive Summary for {ticker}\n\n"
-    report += f"**1. Market Sentiment:** {fg_label} ({fg_score}/100).\n"
-    report += f"**2. News Analysis:** {news_label} sentiment detected.\n"
-    trend = "Bullish 🟢" if price > sma else "Bearish 🔴"
-    rsi_state = "Overbought ⚠️" if rsi > 70 else "Oversold 🛒" if rsi < 30 else "Neutral ⚖️"
-    report += f"**3. Technicals:** {trend} trend, RSI is {rsi_state}."
-    return report
+# --- SMART ASSISTANT LOGIC ---
+def get_smart_response(query, ticker, data):
+    query = query.lower()
+    latest_price = data['Close'].iloc[-1]
+    rsi = data['RSI'].iloc[-1] if 'RSI' in data.columns else 50
+    sma = data['SMA'].iloc[-1] if 'SMA' in data.columns else latest_price
+    trend = "Bullish" if latest_price > sma else "Bearish"
+    
+    if "buy" in query or "sell" in query or "forecast" in query:
+        signal = "Buy" if rsi < 30 and trend == "Bullish" else "Sell" if rsi > 70 else "Hold"
+        return f"Based on technicals, **{ticker}** is currently **{trend}**. RSI is {rsi:.1f}. My automated signal suggests: **{signal}**."
+    elif "price" in query or "current" in query: return f"The current price of **{ticker}** is **{latest_price:,.2f}**."
+    elif "trend" in query: return f"The short-term trend is **{trend}** (Price vs 20-SMA)."
+    elif "rsi" in query: return f"RSI is currently **{rsi:.1f}**."
+    else: return f"I'm analyzing **{ticker}**. You can ask me about the trend, price forecast, or buy/sell signals."
+
+def submit_chat():
+    if st.session_state.chat_input_val:
+        user_input = st.session_state.chat_input_val
+        st.session_state.chat_history.append({"role": "user", "content": user_input})
+        ticker = st.session_state.get('ticker_search', 'Unknown')
+        try: 
+            d = yf.download(ticker, period="1mo", interval="1d", progress=False)
+            d = calculate_technicals(d)
+        except: d = pd.DataFrame({'Close': [0], 'RSI': [50], 'SMA': [0]})
+        response = get_smart_response(user_input, ticker, d)
+        st.session_state.chat_history.append({"role": "ai", "content": response})
+        st.session_state.chat_input_val = "" 
 
 @st.cache_data(ttl=600)
 def fetch_rss_feed(url):
     try:
         response = requests.get(url, timeout=5)
         root = ET.fromstring(response.content)
-        return [{'title':i.find('title').text, 'link':i.find('link').text} for i in root.findall('.//item')[:5]]
+        # Try to find media:content or enclosure for image
+        items = []
+        for i in root.findall('.//item')[:5]:
+            item = {'title': i.find('title').text, 'link': i.find('link').text, 'img': ''}
+            # Basic image check (very simple RSS parsing)
+            desc = i.find('description').text if i.find('description') is not None else ""
+            if 'src="' in desc:
+                try: item['img'] = re.search(r'src="([^"]+)"', desc).group(1)
+                except: pass
+            items.append(item)
+        return items
     except: return []
 
 # --- NAVIGATION ---
@@ -380,8 +463,14 @@ if mode == "Home":
         st.markdown(f"""<div class="trend-card"><div class="trend-header">{title}</div>""", unsafe_allow_html=True)
         for name, sym in assets.items():
             p, chg = get_live_price(sym)
-            color = "#00C853" if chg >= 0 else "#D50000"
-            st.markdown(f"""<div class="trend-item"><span class="trend-name">{name}</span><span class="trend-price" style="color:{color}">{p:,.2f} ({chg:+.2f}%)</span></div>""", unsafe_allow_html=True)
+            color_class = "#00C853" if chg >= 0 else "#D50000"
+            bg_class = "rgba(0, 200, 83, 0.1)" if chg >= 0 else "rgba(213, 0, 0, 0.1)"
+            st.markdown(f"""
+            <div class="trend-item">
+                <span class="trend-name">{name}</span>
+                <span class="trend-price-badge" style="color:{color_class}; background:{bg_class};">{p:,.2f} ({chg:+.2f}%)</span>
+            </div>
+            """, unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     with t1: render_trend_card(txt("Trend_Stocks"), {"NVIDIA": "NVDA", "Tesla": "TSLA", "Apple": "AAPL", "Samsung": "005930.KS"})
@@ -392,27 +481,38 @@ if mode == "Home":
     st.markdown("---")
     st.subheader("📰 Breaking News")
     news_cols = st.columns(2)
-    with news_cols[0]:
-        for n in fetch_rss_feed("https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664"):
-            st.markdown(f"<div class='news-list-item'><a href='{n['link']}' target='_blank' class='news-link'>{n['title']}</a></div>", unsafe_allow_html=True)
-    with news_cols[1]:
-        for n in fetch_rss_feed("http://rss.cnn.com/rss/money_latest.rss"):
-            st.markdown(f"<div class='news-list-item'><a href='{n['link']}' target='_blank' class='news-link'>{n['title']}</a></div>", unsafe_allow_html=True)
+    
+    def render_home_news(url):
+        for n in fetch_rss_feed(url):
+            img_html = f"<div class='news-img-container'><img src='{n['img']}' class='news-img'></div>" if n['img'] else "<div class='news-img-container' style='background:#eee; font-size:20px;'>📰</div>"
+            st.markdown(f"""
+            <a href='{n['link']}' target='_blank' class='news-card-row'>
+                {img_html}
+                <div class='news-content'>
+                    <div class='news-title'>{n['title']}</div>
+                </div>
+            </a>
+            """, unsafe_allow_html=True)
+
+    with news_cols[0]: render_home_news("https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664")
+    with news_cols[1]: render_home_news("http://rss.cnn.com/rss/money_latest.rss")
 
 # --- MODE: ASSET TERMINAL ---
 elif mode == "Asset Terminal":
     main_col, gemini_col = st.columns([3, 1])
     with gemini_col:
         st.markdown(f"""<div class="gemini-box"><div class="gemini-header">✨ Gemini Assistant</div>""", unsafe_allow_html=True)
-        user_query = st.text_input("Ask about this asset...", placeholder="e.g. Forecast?", key="chat_input")
-        if user_query:
-            st.session_state['chat_history'].append({"role": "user", "content": user_query})
-            response = f"Based on the data for {st.session_state.get('ticker_search', 'this asset')}, technicals show volatility. RSI is neutral."
-            st.session_state['chat_history'].append({"role": "ai", "content": response})
+        
+        # Chat History
         for msg in st.session_state['chat_history'][-4:]:
             bg = "#e7f1ff" if msg['role']=="ai" else "white"
-            st.markdown(f"""<div class="chat-bubble" style="background:{bg}"><b>{msg['role'].upper()}:</b> {msg['content']}</div>""", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+            align = "left" if msg['role']=="ai" else "right"
+            st.markdown(f"""<div class="chat-bubble" style="background:{bg}; text-align:{align}"><b>{msg['role'].upper()}:</b> {msg['content']}</div>""", unsafe_allow_html=True)
+        
+        # Chat Input (Callback)
+        st.text_input("Ask ProStock AI...", key="chat_input_val", on_change=submit_chat)
+        
+        st.markdown("<hr>", unsafe_allow_html=True)
         
         # Technical Widget
         current_ticker = st.session_state.get('ticker_search', 'AAPL')
@@ -511,6 +611,20 @@ elif mode == "Asset Terminal":
                 with tabs[1]:
                     try: vix = yf.Ticker("^VIX").history(period="5d")['Close'].iloc[-1]; fear_score = max(0, min(100, 100 - (vix - 10) * 2.5)); fg_label = "Fear" if fear_score < 45 else "Greed"
                     except: fear_score=50; fg_label="Neutral"
+                    
+                    # Restored Forecast Logic
+                    if len(data) > 30:
+                        df_ml = data[['Close']].dropna().reset_index(); df_ml['i'] = df_ml.index
+                        model = LinearRegression().fit(df_ml[['i']], df_ml['Close'])
+                        fut_x = np.arange(df_ml['i'].iloc[-1]+1, df_ml['i'].iloc[-1]+31).reshape(-1,1)
+                        pred = model.predict(fut_x)
+                        fig_p = go.Figure()
+                        fig_p.add_trace(go.Scatter(x=df_ml['i'][-50:], y=df_ml['Close'][-50:], name='History'))
+                        fig_p.add_trace(go.Scatter(x=fut_x.flatten(), y=pred, name='Forecast', line=dict(dash='dash', color='red')))
+                        fig_p.update_layout(height=250, margin=dict(l=0,r=0,t=20,b=0), template="plotly_white"); st.plotly_chart(fig_p, use_container_width=True)
+                        st.caption(f"Projected Trend: **{curr_code} {pred[-1]:.2f}**")
+                    else: st.warning("Insufficient data for forecast")
+                    
                     report = generate_ai_report(ticker, curr_p, data['SMA'].iloc[-1], data['RSI'].iloc[-1], fear_score, fg_label, "Neutral")
                     st.markdown(f"""<div style="background:#f8f9fa; padding:20px; border-radius:5px; border-left:4px solid #0d6efd;">{report.replace(chr(10), '<br>')}</div>""", unsafe_allow_html=True)
                     
@@ -518,8 +632,25 @@ elif mode == "Asset Terminal":
                     if news:
                         for i in news[:10]:
                             t = safe_extract_news_title(i) or "News"; l = i.get('link') or "#"
+                            # Extract Image
+                            img_url = ""
+                            try: img_url = i.get('thumbnail', {}).get('resolutions', [{}])[0].get('url', '')
+                            except: pass
+                            
                             if 'clickThroughUrl' in i and isinstance(i['clickThroughUrl'], dict): l = i['clickThroughUrl'].get('url', l)
-                            st.markdown(f"<div class='news-list-item'><a href='{l}' target='_blank' class='news-link'>{t}</a></div>", unsafe_allow_html=True)
+                            
+                            # Render Card (Asset Terminal)
+                            img_html = f"<div class='news-img-container'><img src='{img_url}' class='news-img'></div>" if img_url else "<div class='news-img-container' style='background:#eee; color:#999; font-size:20px;'>📰</div>"
+                            
+                            st.markdown(f"""
+                            <a href='{l}' target='_blank' class='news-card-row'>
+                                {img_html}
+                                <div class='news-content'>
+                                    <div class='news-title'>{t}</div>
+                                    <div class='news-meta'>{i.get('publisher', 'Yahoo Finance')} • {datetime.fromtimestamp(i.get('providerPublishTime', 0)).strftime('%H:%M')}</div>
+                                </div>
+                            </a>
+                            """, unsafe_allow_html=True)
                 with tabs[3]:
                     st.dataframe(data.tail(50), use_container_width=True)
                     csv = data.to_csv().encode('utf-8')
@@ -558,12 +689,12 @@ elif mode == "Media & News":
     def get_feed(url):
         try:
             r = requests.get(url, timeout=3); root = ET.fromstring(r.content)
-            return [{'t':i.find('title').text, 'l':i.find('link').text} for i in root.findall('.//item')[:5]]
+            return [{'title':i.find('title').text, 'link':i.find('link').text} for i in root.findall('.//item')[:5]]
         except: return []
     t1, t2, t3 = st.tabs(["CNBC", "BBC", "CNN"])
     with t1:
-        for n in get_feed("https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664"): st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
+        for n in get_feed("https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664"): st.markdown(f"<div class='news-list-item'><a href='{n['link']}' target='_blank' class='news-link'>{n['title']}</a></div>", unsafe_allow_html=True)
     with t2:
-        for n in get_feed("http://feeds.bbci.co.uk/news/business/rss.xml"): st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
+        for n in get_feed("http://feeds.bbci.co.uk/news/business/rss.xml"): st.markdown(f"<div class='news-list-item'><a href='{n['link']}' target='_blank' class='news-link'>{n['title']}</a></div>", unsafe_allow_html=True)
     with t3:
-        for n in get_feed("http://rss.cnn.com/rss/money_latest.rss"): st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
+        for n in get_feed("http://rss.cnn.com/rss/money_latest.rss"): st.markdown(f"<div class='news-list-item'><a href='{n['link']}' target='_blank' class='news-link'>{n['title']}</a></div>", unsafe_allow_html=True)
