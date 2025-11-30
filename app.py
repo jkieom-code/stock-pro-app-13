@@ -311,11 +311,12 @@ def analyze_news_sentiment(news_items):
     return pos, neg, neu, label
 
 def generate_ai_report(ticker, price, sma, rsi, fg_score, fg_label, news_label):
-    report = f"**1. Sentiment:** {fg_label} ({fg_score}/100)\n"
-    report += f"**2. News:** {news_label}\n"
+    report = f"### 🧠 AI Executive Summary for {ticker}\n\n"
+    report += f"**1. Market Sentiment:** {fg_label} ({fg_score}/100).\n"
+    report += f"**2. News Analysis:** {news_label} sentiment detected.\n"
     trend = "Bullish 🟢" if price > sma else "Bearish 🔴"
-    rsi_state = "Overbought" if rsi > 70 else "Oversold" if rsi < 30 else "Neutral"
-    report += f"**3. Tech:** {trend}, RSI {rsi:.0f} ({rsi_state})"
+    rsi_state = "Overbought ⚠️" if rsi > 70 else "Oversold 🛒" if rsi < 30 else "Neutral ⚖️"
+    report += f"**3. Technicals:** {trend} trend, RSI is {rsi_state}."
     return report
 
 @st.cache_data(ttl=600)
@@ -323,7 +324,7 @@ def fetch_rss_feed(url):
     try:
         response = requests.get(url, timeout=5)
         root = ET.fromstring(response.content)
-        return [{'t':i.find('title').text, 'l':i.find('link').text} for i in root.findall('.//item')[:5]]
+        return [{'title':i.find('title').text, 'link':i.find('link').text} for i in root.findall('.//item')[:5]]
     except: return []
 
 # --- NAVIGATION ---
@@ -344,17 +345,16 @@ with st.sidebar.expander("🧮 Currency Calc", expanded=False):
     with c1: cc_f = st.selectbox("From", ["USD", "KRW", "EUR", "JPY", "BTC"])
     with c2: cc_to = st.selectbox("To", ["KRW", "USD", "EUR", "JPY", "BTC"])
     if st.button(txt("Convert")):
-        # Simple approximate conversion using yfinance pairs
         try:
             if cc_f==cc_to: res=cc_amt
-            elif cc_f=='USD': r = yf.Ticker(f"{cc_to}=X").history(period='1d')['Close'].iloc[-1]; res = cc_amt * r if cc_to!='KRW' else cc_amt * r # Logic varies
-            else: res = None # Simplified for brevity
+            elif cc_f=='USD': r = yf.Ticker(f"{cc_to}=X").history(period='1d')['Close'].iloc[-1]; res = cc_amt * r if cc_to!='KRW' else cc_amt * r 
+            else: res = None 
             if res: st.success(f"{res:,.2f} {cc_to}")
         except: st.error(txt("Rate_Err"))
 
 # --- MODE: HOMEPAGE ---
 if mode == "Home":
-    # Account Top Right
+    st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
     c_fill, c_acc = st.columns([3, 1])
     with c_acc:
         with st.expander(f"👤 ID: {st.session_state['user_id']}"):
@@ -363,7 +363,6 @@ if mode == "Home":
 
     st.markdown(f"""<div class="hero-container"><div class="homepage-logo">Pro<span>Stock</span></div><p style="font-size:18px; color:#666;">{txt("Hero_Sub")}</p></div>""", unsafe_allow_html=True)
     
-    # Search
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
         big_search = st.text_input("🔍 " + txt("Search"), placeholder=txt("Search_Ph"), label_visibility="collapsed")
@@ -376,7 +375,6 @@ if mode == "Home":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Trending Dashboards
     t1, t2, t3, t4 = st.columns(4)
     def render_trend_card(title, assets):
         st.markdown(f"""<div class="trend-card"><div class="trend-header">{title}</div>""", unsafe_allow_html=True)
@@ -403,60 +401,29 @@ if mode == "Home":
 
 # --- MODE: ASSET TERMINAL ---
 elif mode == "Asset Terminal":
-    # Gemini Sidebar Layout
     main_col, gemini_col = st.columns([3, 1])
-    
-    # RIGHT SIDEBAR (GEMINI AI)
     with gemini_col:
         st.markdown(f"""<div class="gemini-box"><div class="gemini-header">✨ Gemini Assistant</div>""", unsafe_allow_html=True)
-        
-        # Chat UI
         user_query = st.text_input("Ask about this asset...", placeholder="e.g. Forecast?", key="chat_input")
         if user_query:
             st.session_state['chat_history'].append({"role": "user", "content": user_query})
-            # Simulated AI Response
-            response = f"Based on the data for {st.session_state.get('ticker_search', 'this asset')}, the technical indicators suggest significant volatility. The RSI is neutral, but moving averages indicate a potential trend shift."
+            response = f"Based on the data for {st.session_state.get('ticker_search', 'this asset')}, technicals show volatility. RSI is neutral."
             st.session_state['chat_history'].append({"role": "ai", "content": response})
-        
-        for msg in st.session_state['chat_history'][-4:]: # Show last 4 messages
+        for msg in st.session_state['chat_history'][-4:]:
             bg = "#e7f1ff" if msg['role']=="ai" else "white"
             st.markdown(f"""<div class="chat-bubble" style="background:{bg}"><b>{msg['role'].upper()}:</b> {msg['content']}</div>""", unsafe_allow_html=True)
-        
         st.markdown("</div>", unsafe_allow_html=True)
-
-        # Technical Analysis Widget
-        st.markdown("### Technical Analysis")
-        # Using TradingView Widget Iframe for visual "Strong Buy/Sell" Gauge
+        
+        # Technical Widget
         current_ticker = st.session_state.get('ticker_search', 'AAPL')
-        # Fallback to generic if complex ticker
         symbol_for_widget = current_ticker if "-" not in current_ticker else "NASDAQ:AAPL" 
         if current_ticker.endswith("=X"): symbol_for_widget = f"FX:{current_ticker.replace('=X','')}"
         if current_ticker.endswith("-USD"): symbol_for_widget = f"COINBASE:{current_ticker.replace('-USD','')}USD"
-        
-        components.html(f"""
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
-          {{
-          "interval": "1m",
-          "width": "100%",
-          "isTransparent": true,
-          "height": "450",
-          "symbol": "{symbol_for_widget}",
-          "showIntervalTabs": true,
-          "displayMode": "single",
-          "locale": "en",
-          "colorTheme": "light"
-        }}
-          </script>
-        </div>
-        """, height=460)
+        components.html(f"""<div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>{{"interval": "1m","width": "100%","isTransparent": true,"height": "450","symbol": "{symbol_for_widget}","showIntervalTabs": true,"displayMode": "single","locale": "en","colorTheme": "light"}}</script></div>""", height=460)
 
-    # MAIN CONTENT
     with main_col:
         default_ticker = st.session_state.get('ticker_search', "")
         st.markdown('<div class="prostock-logo" style="font-size:24px;">Pro<span>Stock</span> Terminal</div>', unsafe_allow_html=True)
-        
         search_query = st.text_input(txt("Search"), value=default_ticker, placeholder=txt("Search_Ph"), label_visibility="collapsed")
         ticker = ""; market_type = "Stocks"
         if search_query:
@@ -465,14 +432,13 @@ elif mode == "Asset Terminal":
             if ticker.endswith("-USD"): market_type = "Crypto"
             elif ticker.endswith("=F"): market_type = "Commodities"
             elif ticker.endswith("=X"): market_type = "Currencies/Forex"
-            else: market_type = "Stocks"
         else:
             market_type_sel = st.sidebar.selectbox("Market Type", [txt("Stocks"), txt("Commodities"), txt("Forex"), txt("Crypto")])
             if market_type_sel == txt("Stocks"): market_type="Stocks"; ticker = st.sidebar.text_input("Ticker", "AAPL").upper()
-            elif market_type_sel == txt("Commodities"): market_type="Commodities"; ticker = {"Gold":"GC=F","Silver":"SI=F"}[st.sidebar.selectbox("Select", ["Gold","Silver"])]
+            elif market_type_sel == txt("Commodities"): market_type="Commodities"; ticker = {"Gold":"GC=F","Silver":"SI=F","Oil":"CL=F"}[st.sidebar.selectbox("Select", ["Gold","Silver"])]
             elif market_type_sel == txt("Forex"): market_type="Currencies/Forex"; ticker = {"USD/KRW":"KRW=X","EUR/USD":"EURUSD=X"}[st.sidebar.selectbox("Select", ["USD/KRW","EUR/USD"])]
             elif market_type_sel == txt("Crypto"): market_type="Crypto"; ticker = {"Bitcoin":"BTC-USD","Ethereum":"ETH-USD"}[st.sidebar.selectbox("Select", ["Bitcoin","Ethereum"])]
-
+        
         st.session_state['ticker_search'] = ticker
         user_favs = db[st.session_state['user_id']]['favorites']
         is_fav = ticker in user_favs
@@ -480,18 +446,14 @@ elif mode == "Asset Terminal":
             if not is_fav: db[st.session_state['user_id']]['favorites'].append(ticker)
         else:
             if is_fav: db[st.session_state['user_id']]['favorites'].remove(ticker)
-
+        
         with st.sidebar.expander("⚙️ Chart Settings", expanded=True):
             timeframe = st.selectbox("Interval", ["1 Minute", "5 Minute", "1 Hour", "1 Day"])
-            show_sma = st.toggle("SMA", True)
-            show_bb = st.toggle("Bollinger Bands")
-            show_rsi = st.toggle("RSI")
-            
+            show_sma = st.toggle("SMA", True); show_bb = st.toggle("Bollinger Bands"); show_rsi = st.toggle("RSI")
         if timeframe == "1 Minute": interval, period = "1m", "1d"
         elif timeframe == "5 Minute": interval, period = "5m", "5d"
         elif timeframe == "1 Hour": interval, period = "1h", "1mo"
         else: interval, period = "1d", "1y"
-
         if interval == "1d":
             start_date = st.sidebar.date_input("Start", value=datetime.now() - timedelta(days=365))
             end_date = st.sidebar.date_input("End", value=datetime.now())
@@ -501,14 +463,12 @@ elif mode == "Asset Terminal":
             try:
                 if interval == "1d": data = get_stock_data(ticker, interval, period, start_date, end_date)
                 else: data = get_stock_data(ticker, interval, period)
-                
                 try: 
                     info = yf.Ticker(ticker).info
                     live_price = info.get('currentPrice') or info.get('regularMarketPrice') or info.get('ask')
                 except: info = {}; live_price = None
                 try: news = yf.Ticker(ticker).news
                 except: news = []
-                
                 if isinstance(data.columns, pd.MultiIndex): data.columns = data.columns.get_level_values(0)
                 data = calculate_technicals(data)
                 if not live_price and not data.empty: live_price = data['Close'].iloc[-1]
@@ -527,7 +487,6 @@ elif mode == "Asset Terminal":
                 try: krw_rate = yf.Ticker("KRW=X").history(period="1d")['Close'].iloc[-1]
                 except: krw_rate = 0
                 price_sub = f"(₩{curr_p*krw_rate:,.0f})" if curr_code=='USD' and krw_rate else ""
-
                 st.markdown(f"""
                 <div class="finance-header">
                     <div style="display:flex; justify-content:space-between; align-items:flex-end;">
@@ -538,7 +497,6 @@ elif mode == "Asset Terminal":
                 """, unsafe_allow_html=True)
                 
                 tabs = st.tabs([txt("Tab_Chart"), txt("Tab_AI"), txt("Tab_News"), txt("Tab_Data")] + ([txt("Tab_Fund")] if market_type=="Stocks" else []))
-                
                 with tabs[0]:
                     fig = go.Figure()
                     if market_type == "Crypto": fig.add_trace(go.Scatter(x=data.index, y=data['Close'], fill='tozeroy', line=dict(color='#2962FF'), name='Price'))
@@ -547,11 +505,9 @@ elif mode == "Asset Terminal":
                     if show_bb:
                         fig.add_trace(go.Scatter(x=data.index, y=data['BB_Upper'], line=dict(color='#999', dash='dot'), name='BB Up'))
                         fig.add_trace(go.Scatter(x=data.index, y=data['BB_Lower'], line=dict(color='#999', dash='dot'), name='BB Lo'))
-                    
                     rangebreaks = [dict(bounds=["sat", "mon"])] if market_type in ["Stocks", "Commodities"] and interval in ['1m', '5m', '1h'] else []
                     fig.update_layout(height=500, template="plotly_white", xaxis_rangeslider_visible=False, xaxis=dict(rangebreaks=rangebreaks))
                     st.plotly_chart(fig, use_container_width=True)
-
                 with tabs[1]:
                     try: vix = yf.Ticker("^VIX").history(period="5d")['Close'].iloc[-1]; fear_score = max(0, min(100, 100 - (vix - 10) * 2.5)); fg_label = "Fear" if fear_score < 45 else "Greed"
                     except: fear_score=50; fg_label="Neutral"
@@ -564,20 +520,17 @@ elif mode == "Asset Terminal":
                             t = safe_extract_news_title(i) or "News"; l = i.get('link') or "#"
                             if 'clickThroughUrl' in i and isinstance(i['clickThroughUrl'], dict): l = i['clickThroughUrl'].get('url', l)
                             st.markdown(f"<div class='news-list-item'><a href='{l}' target='_blank' class='news-link'>{t}</a></div>", unsafe_allow_html=True)
-
                 with tabs[3]:
                     st.dataframe(data.tail(50), use_container_width=True)
                     csv = data.to_csv().encode('utf-8')
                     st.download_button("Download CSV", csv, f"{ticker}_data.csv", "text/csv")
-
                 if market_type == "Stocks":
                     with tabs[4]:
                         st.write(f"**Sector:** {info.get('sector', 'N/A')}"); st.write(f"**Industry:** {info.get('industry', 'N/A')}")
                         st.write("**Business Summary:**"); st.write(info.get('longBusinessSummary', 'N/A'))
-
             except Exception as e: st.error(f"Error loading {ticker}: {e}")
 
-# --- MODE: FAVORITES (Simplified) ---
+# --- MODE: FAVORITES ---
 elif mode == "Favorites":
     st.title(txt("Watchlist"))
     user_favs = db[st.session_state['user_id']]['favorites']
@@ -592,6 +545,25 @@ elif mode == "Favorites":
 # --- MODE: MEDIA ---
 elif mode == "Media & News":
     st.title(txt("Media_Center"))
+    st.subheader(txt("Quick"))
+    qa1, qa2, qa3 = st.columns(3)
+    with qa1: st.link_button("🌐 Investing.com", "https://www.investing.com", use_container_width=True)
+    with qa2: st.link_button("📈 Yahoo Finance", "https://finance.yahoo.com", use_container_width=True)
+    with qa3: st.link_button("🔎 Google Finance", "https://www.google.com/finance", use_container_width=True)
+    st.markdown("---")
     c1, c2 = st.columns(2)
-    with c1: st.subheader("Bloomberg TV"); st.video("https://www.youtube.com/watch?v=iEpJwprxDdk")
-    with c2: st.subheader("Sky News"); st.video("https://www.youtube.com/watch?v=YDvsBbKfLPA")
+    with c1: st.subheader("Bloomberg TV"); st.video("https://www.youtube.com/watch?v=iEpJwprxDdk"); st.subheader("Sky News"); st.video("https://www.youtube.com/watch?v=YDvsBbKfLPA")
+    with c2: st.subheader("CNA Asia"); st.video("https://www.youtube.com/watch?v=XWq5kBlakcQ"); st.subheader("ABC Australia"); st.video("https://www.youtube.com/watch?v=iipR5yUp36o")
+    st.markdown("---")
+    def get_feed(url):
+        try:
+            r = requests.get(url, timeout=3); root = ET.fromstring(r.content)
+            return [{'t':i.find('title').text, 'l':i.find('link').text} for i in root.findall('.//item')[:5]]
+        except: return []
+    t1, t2, t3 = st.tabs(["CNBC", "BBC", "CNN"])
+    with t1:
+        for n in get_feed("https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664"): st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
+    with t2:
+        for n in get_feed("http://feeds.bbci.co.uk/news/business/rss.xml"): st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
+    with t3:
+        for n in get_feed("http://rss.cnn.com/rss/money_latest.rss"): st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
