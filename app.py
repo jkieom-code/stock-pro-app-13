@@ -64,20 +64,18 @@ st.markdown("""
     .stat-label { color: #888; font-size: 12px; }
     .stat-value { font-weight: 600; color: #333; }
     
-    /* News Feed (Clean Text Style) */
+    /* News Feed (Clean Text Style - No Images) */
     .news-card-row {
         display: flex;
-        flex-direction: row;
+        flex-direction: column; /* Stack vertically for text only */
         background: white;
         border-bottom: 1px solid #eee;
         padding: 15px;
         text-decoration: none;
-        align-items: center;
         transition: background-color 0.2s;
         border-left: 3px solid transparent;
     }
     .news-card-row:hover { background-color: #fcfcfc; border-left: 3px solid #0d6efd; }
-    .news-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
     .news-title { font-size: 15px; font-weight: 600; color: #1a0dab; line-height: 1.4; margin-bottom: 5px; text-decoration: none; display: block;}
     .news-meta { font-size: 12px; color: #666; }
     
@@ -353,7 +351,8 @@ def fetch_rss_feed(url):
 
 # --- REAL GEMINI AI ---
 def call_gemini_api(prompt, api_key):
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + api_key
+    # Use Flash Latest as requested
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + api_key
     headers = {'Content-Type': 'application/json'}
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
@@ -363,8 +362,13 @@ def call_gemini_api(prompt, api_key):
         r = requests.post(url, headers=headers, json=payload)
         if r.status_code == 200:
             return r.json()['candidates'][0]['content']['parts'][0]['text']
-        else:
-            return f"Error: {r.status_code} - {r.text}"
+        elif r.status_code == 404:
+             # Fallback to standard flash if latest alias is missing in region
+             url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + api_key
+             r = requests.post(url, headers=headers, json=payload)
+             if r.status_code == 200:
+                return r.json()['candidates'][0]['content']['parts'][0]['text']
+        return f"Error: {r.status_code} - {r.text}"
     except Exception as e:
         return f"Connection Error: {e}"
 
@@ -398,7 +402,7 @@ def submit_chat():
         try: 
             d = yf.download(ticker, period="1mo", interval="1d", progress=False)
             d = calculate_technicals(d)
-        except: d = pd.DataFrame()
+        except: d = pd.DataFrame({'Close': [0]})
         
         api_key = st.session_state.get('gemini_api_key', '')
         
@@ -583,6 +587,20 @@ elif mode == "Asset Terminal":
                 with tabs[1]:
                     try: vix = yf.Ticker("^VIX").history(period="5d")['Close'].iloc[-1]; fear_score = max(0, min(100, 100 - (vix - 10) * 2.5)); fg_label = "Fear" if fear_score < 45 else "Greed"
                     except: fear_score=50; fg_label="Neutral"
+                    
+                    # RESTORED FORECAST CHART
+                    if len(data) > 30:
+                        df_ml = data[['Close']].dropna().reset_index(); df_ml['i'] = df_ml.index
+                        model = LinearRegression().fit(df_ml[['i']], df_ml['Close'])
+                        fut_x = np.arange(df_ml['i'].iloc[-1]+1, df_ml['i'].iloc[-1]+31).reshape(-1,1)
+                        pred = model.predict(fut_x)
+                        fig_p = go.Figure()
+                        fig_p.add_trace(go.Scatter(x=df_ml['i'][-50:], y=df_ml['Close'][-50:], name='History'))
+                        fig_p.add_trace(go.Scatter(x=fut_x.flatten(), y=pred, name='Forecast', line=dict(dash='dash', color='red')))
+                        fig_p.update_layout(height=250, margin=dict(l=0,r=0,t=20,b=0), template="plotly_white", title="30-Period Price Forecast"); st.plotly_chart(fig_p, use_container_width=True)
+                        st.caption(f"Projected Trend: **{curr_code} {pred[-1]:.2f}**")
+                    else: st.warning("Insufficient data for forecast")
+                    
                     report = generate_ai_report(ticker, curr_p, data['SMA'].iloc[-1], data['RSI'].iloc[-1], fear_score, fg_label, "Neutral")
                     st.markdown(f"""<div style="background:#f8f9fa; padding:20px; border-radius:5px; border-left:4px solid #0d6efd;">{report.replace(chr(10), '<br>')}</div>""", unsafe_allow_html=True)
                     
