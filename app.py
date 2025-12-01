@@ -21,13 +21,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- LOGO HTML COMPONENT (CSS Version - Never Breaks) ---
+# --- LOGO HTML COMPONENT ---
 def get_logo_html(size="24px", dark_bg=False):
-    # Use white text for 'Pro' if background is dark, else black. Blue remains the same.
     pro_color = "#ffffff" if dark_bg else "#333333"
     stock_color = "#0d6efd"
-    
-    # Return unindented HTML string to prevent code block rendering
     return f"""<div style="font-family: 'Roboto', sans-serif; font-weight: 900; font-size: {size}; letter-spacing: -0.5px; color: {pro_color}; display: inline-block;">Pro<span style="color: {stock_color};">Stock</span></div>"""
 
 # --- Custom CSS ---
@@ -37,25 +34,15 @@ st.markdown("""
     html, body, [class*="css"] { font-family: 'Roboto', sans-serif; }
     .stApp { background-color: #ffffff; color: #333333; }
     
-    /* Sidebar Logo Alignment */
-    .prostock-logo-sidebar { 
-        text-align: center;
-        margin-bottom: 15px;
-    }
-    
-    .homepage-logo-container {
-        text-align: center;
-        margin-bottom: 15px;
-    }
+    /* Logo Styles */
+    .prostock-logo-sidebar { text-align: center; margin-bottom: 15px; }
+    .homepage-logo-container { text-align: center; margin-bottom: 15px; }
     
     /* Homepage Elements */
     .hero-container { padding: 20px 20px; text-align: center; }
     
     /* Trending Cards */
-    .trend-card {
-        background: white; border: 1px solid #f0f0f0; border-radius: 12px; padding: 20px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.03); transition: all 0.3s ease; height: 100%;
-    }
+    .trend-card { background: white; border: 1px solid #f0f0f0; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); transition: all 0.3s ease; height: 100%; }
     .trend-card:hover { box-shadow: 0 8px 20px rgba(13, 110, 253, 0.1); transform: translateY(-3px); border-color: #0d6efd; }
     .trend-header { font-size: 16px; color: #333; font-weight: 800; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #f8f9fa; padding-bottom: 10px; }
     .trend-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f8f9fa; font-size: 14px; }
@@ -65,7 +52,6 @@ st.markdown("""
     
     /* Account Top Right */
     .account-bar { display: flex; justify-content: flex-end; align-items: center; gap: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; margin-bottom: 20px; }
-    .user-badge { font-weight: 600; color: #555; background: #e9ecef; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
     
     /* Header & Logo Integration */
     .finance-header { background-color: #ffffff; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px; margin-bottom: 20px; margin-top: 10px; }
@@ -77,86 +63,45 @@ st.markdown("""
     .stat-label { color: #888; font-size: 12px; }
     .stat-value { font-weight: 600; color: #333; }
     
-    /* News Feed (Clean Text Style - No Images) */
+    /* News Feed (Fixed Layout) */
     .news-card-row {
-        display: flex;
-        flex-direction: column;
+        display: block;
         background: white;
         border-bottom: 1px solid #eee;
         padding: 15px;
         text-decoration: none;
-        transition: all 0.2s ease;
-        margin-bottom: 10px;
-        border-radius: 6px;
+        transition: background-color 0.2s;
+        border-left: 4px solid transparent;
     }
     .news-card-row:hover { 
-        background-color: #f8f9fa; 
-        transform: translateX(3px);
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        background-color: #fcfcfc; 
+        border-left: 4px solid #0d6efd;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
-    .news-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+    .news-content { width: 100%; }
     .news-title { 
-        font-size: 15px; 
+        font-size: 16px; 
         font-weight: 600; 
-        color: #212529; 
+        color: #1a0dab; 
         line-height: 1.4; 
-        margin-bottom: 8px; 
+        margin-bottom: 5px; 
         text-decoration: none; 
         display: block;
     }
     .news-meta { 
         font-size: 11px; 
-        color: #888; 
+        color: #666; 
         text-transform: uppercase;
         font-weight: 700;
         letter-spacing: 0.5px;
     }
     
     /* Gemini Sidebar */
-    .gemini-box {
-        background-color: #f8f9fa;
-        border-left: 1px solid #eee;
-        padding: 20px;
-        height: 100%;
-        min-height: 600px;
-    }
-    .gemini-header {
-        font-size: 20px; font-weight: 700; color: #333; margin-bottom: 20px;
-        display: flex; align-items: center; gap: 10px;
-    }
+    .gemini-box { background-color: #f8f9fa; border-left: 1px solid #eee; padding: 20px; height: 100%; min-height: 600px; }
+    .gemini-header { font-size: 20px; font-weight: 700; color: #333; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
     .gemini-logo-icon { width: 30px; height: 30px; }
+    .chat-bubble { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-size: 13px; border: 1px solid #eee; }
     
-    .chat-bubble {
-        background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-size: 13px;
-        border: 1px solid #eee;
-    }
-    
-    /* Guest Homepage Styling */
-    .guest-hero {
-        background: linear-gradient(135deg, #000000 0%, #001f3f 100%);
-        height: 500px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 12px;
-        position: relative;
-        margin-top: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        overflow: hidden;
-    }
-    .guest-hero-text {
-        position: relative;
-        color: white;
-        font-size: 56px;
-        font-weight: 900;
-        font-family: 'Roboto', sans-serif;
-        text-align: center;
-        text-shadow: 0 2px 10px rgba(0,0,0,0.8);
-        padding: 20px;
-        z-index: 2;
-    }
-
     /* Loading */
     .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; animation: fadein 1s; }
     
@@ -217,7 +162,6 @@ def txt(key):
 if not st.session_state['splash_shown']:
     placeholder = st.empty()
     with placeholder.container():
-        # NO INDENTATION in HTML string to prevent code block rendering
         st.markdown(f"""<div class="loading-container">{get_logo_html("60px")}<p style='color: #666; margin-bottom: 10px; margin-top: 20px;'>Institutional Grade Analytics</p><p style='color: #0d6efd; font-size: 18px; font-weight: 500;'>professional personal banking</p></div>""", unsafe_allow_html=True)
     time.sleep(3)
     placeholder.empty()
@@ -255,9 +199,7 @@ if not st.session_state['logged_in'] and not st.session_state['guest_mode']:
     c1,c2,c3 = st.columns([1,1.5,1])
     with c2:
         logo_html = get_logo_html("48px", dark_bg=True)
-        # NO INDENTATION in HTML string
         st.markdown(f"""<div class="login-box">{logo_html}<p class="login-subtitle" style="margin-top:15px;">Professional Personal Banking</p></div>""", unsafe_allow_html=True)
-        
         uid = st.text_input("User ID", max_chars=6, type="password", placeholder="Access Code (6 Digits)")
         b1,b2=st.columns(2)
         with b1: 
@@ -268,7 +210,6 @@ if not st.session_state['logged_in'] and not st.session_state['guest_mode']:
             if st.button("Sign Up", use_container_width=True):
                 if len(uid)==6 and uid.isdigit(): signup_user(uid)
                 else: st.error("Invalid ID")
-        
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("Login Later", use_container_width=True):
             login_later()
@@ -280,11 +221,20 @@ ASSET_MAP = {
     "SOLANA": "SOL-USD", "XRP": "XRP-USD", "GOLD": "GC=F", "SILVER": "SI=F",
     "OIL": "CL=F", "USD/KRW": "KRW=X", "APPLE": "AAPL", "TESLA": "TSLA",
     "NVIDIA": "NVDA", "GOOGLE": "GOOGL", "AMAZON": "AMZN", "SAMSUNG": "005930.KS", "DISNEY": "DIS",
-    "KOSPI": "^KS11", "KOSDAQ": "^KQ11",
+    "KOSPI": "^KS11", "KOSDAQ": "^KQ11", "MICROSOFT": "MSFT", "META": "META", "NETFLIX": "NFLX",
     "비트코인": "BTC-USD", "이더리움": "ETH-USD", "리플": "XRP-USD", "솔라나": "SOL-USD", 
     "삼성전자": "005930.KS", "삼성": "005930.KS", "애플": "AAPL", "테슬라": "TSLA", "엔비디아": "NVDA",
     "금": "GC=F", "원유": "CL=F", "환율": "KRW=X", "원달러": "KRW=X", "코스피": "^KS11", "코스닥": "^KQ11"
 }
+
+# --- HELPER FUNCTIONS ---
+def smart_search(query):
+    if query:
+        q_upper = query.upper().strip()
+        ticker_res = ASSET_MAP.get(q_upper, q_upper)
+        st.session_state['ticker_search'] = ticker_res
+        st.session_state['mode'] = "Asset Terminal"
+        st.rerun()
 
 @st.cache_data(ttl=10)
 def get_live_price(ticker):
@@ -418,73 +368,38 @@ def fetch_rss_feed(url):
 
 # --- REAL GEMINI AI ---
 def call_gemini_api(prompt, api_key):
-    # Model Fallback Sequence
     models = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"]
-    
     headers = {'Content-Type': 'application/json'}
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"maxOutputTokens": 300}
-    }
-
+    payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"maxOutputTokens": 300}}
     for model in models:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
         try:
             r = requests.post(url, headers=headers, json=payload)
-            if r.status_code == 200:
-                return r.json()['candidates'][0]['content']['parts'][0]['text']
-        except:
-            continue
-            
-    return "AI Service Unavailable. Please check API Key or try again later."
+            if r.status_code == 200: return r.json()['candidates'][0]['content']['parts'][0]['text']
+        except: continue
+    return "AI Service Unavailable. Please check API Key."
 
 def get_smart_response(query, ticker, data, api_key):
-    if not api_key:
-        return "⚠️ API Key missing. Please check settings."
-
-    # Check for data availability
+    if not api_key: return "⚠️ API Key missing. Please check settings."
     latest_price = data['Close'].iloc[-1] if not data.empty else "N/A"
-    
-    # Safe extraction of RSI/SMA
-    rsi_val = "N/A"
-    if 'RSI' in data.columns and not data['RSI'].empty:
-        val = data['RSI'].iloc[-1]
-        if not pd.isna(val): rsi_val = f"{val:.2f}"
-        
-    sma_val = "N/A"
-    if 'SMA' in data.columns and not data['SMA'].empty:
-        val = data['SMA'].iloc[-1]
-        if not pd.isna(val): sma_val = f"{val:.2f}"
-
-    prompt = f"""
-    You are a professional financial analyst. Analyze {ticker} based on this real-time data:
-    - Price: {latest_price}
-    - RSI (14): {rsi_val}
-    - SMA (20): {sma_val}
-    
-    User Question: "{query}"
-    
-    Provide a concise, actionable answer (max 3 sentences).
-    """
+    rsi_val = f"{data['RSI'].iloc[-1]:.2f}" if 'RSI' in data.columns and not pd.isna(data['RSI'].iloc[-1]) else "N/A"
+    sma_val = f"{data['SMA'].iloc[-1]:.2f}" if 'SMA' in data.columns and not pd.isna(data['SMA'].iloc[-1]) else "N/A"
+    prompt = f"""You are a professional financial analyst. Analyze {ticker} based on this real-time data: Price: {latest_price}, RSI (14): {rsi_val}, SMA (20): {sma_val}. User Question: "{query}". Provide a concise, actionable answer (max 3 sentences)."""
     return call_gemini_api(prompt, api_key)
 
 def submit_chat():
     if st.session_state.chat_input_val:
         user_input = st.session_state.chat_input_val
         st.session_state.chat_history.append({"role": "user", "content": user_input})
-        
         ticker = st.session_state.get('ticker_search', 'Unknown')
         try: 
             d = yf.download(ticker, period="1mo", interval="1d", progress=False)
             d = calculate_technicals(d)
         except: d = pd.DataFrame({'Close': [0]})
-        
         api_key = st.session_state.get('gemini_api_key', '')
-        
         with st.spinner("AI Thinking..."):
             response = get_smart_response(user_input, ticker, d, api_key)
             st.session_state.chat_history.append({"role": "ai", "content": response})
-        
         st.session_state.chat_input_val = "" 
 
 # --- NAVIGATION ---
@@ -520,28 +435,12 @@ with st.sidebar.expander("🧮 Currency Calc", expanded=False):
 if mode == "Home":
     # Guest Mode Header Check
     if st.session_state.get('guest_mode', False):
-        # CSS for removing sidebar in guest mode
-        st.markdown("""
-            <style>
-            [data-testid="stSidebar"] { display: none; }
-            </style>
-        """, unsafe_allow_html=True)
-
-        # GUEST HOME HEADER
+        st.markdown("""<style>[data-testid="stSidebar"] { display: none; }</style>""", unsafe_allow_html=True)
         h1, h2, h3 = st.columns([1,2,1])
         with h1: st.markdown(f'<div class="prostock-logo" style="font-size:24px;">{get_logo_html("24px")}</div>', unsafe_allow_html=True)
         with h2: 
-             # Helper: Smart Search Wrapper
-            def smart_search(query):
-                if query:
-                    q_upper = query.upper().strip()
-                    ticker_res = ASSET_MAP.get(q_upper, q_upper)
-                    st.session_state['ticker_search'] = ticker_res
-                    st.session_state['mode'] = "Asset Terminal"
-                    st.rerun()
-
-            q = st.text_input("Search", placeholder=txt("Search_Ph"), label_visibility="collapsed")
-            if q: smart_search(q)
+             q = st.text_input("Search", placeholder=txt("Search_Ph"), label_visibility="collapsed")
+             if q: smart_search(q)
         with h3:
             b1, b2 = st.columns(2)
             with b1: 
@@ -551,23 +450,9 @@ if mode == "Home":
                  if st.button("Sign Up", type="primary", use_container_width=True):
                      st.session_state['guest_mode'] = False; st.session_state['logged_in'] = False; st.rerun()
 
-        # GUEST HERO
-        st.markdown(f"""
-        <div class="guest-hero">
-            <div class="guest-hero-text">Market Intelligence for the Modern Investor</div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f"""<div class="guest-hero"><div class="guest-hero-text">Market Intelligence for the Modern Investor</div></div>""", unsafe_allow_html=True)
         
     else:
-        # Helper: Smart Search Wrapper
-        def smart_search(query):
-            if query:
-                q_upper = query.upper().strip()
-                ticker_res = ASSET_MAP.get(q_upper, q_upper)
-                st.session_state['ticker_search'] = ticker_res
-                st.session_state['mode'] = "Asset Terminal"
-                st.rerun()
-
         st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
         c_fill, c_acc = st.columns([3, 1])
         with c_acc:
@@ -600,14 +485,7 @@ if mode == "Home":
         def render_home_news(url, source):
             items = fetch_rss_feed(url)
             for n in items: 
-                st.markdown(f"""
-                <a href='{n['link']}' target='_blank' class='news-card-row'>
-                    <div class='news-content'>
-                        <div style="color:#666; font-size:10px; font-weight:700; text-transform:uppercase; margin-bottom:4px;">{source}</div>
-                        <div class='news-title'>{n['title']}</div>
-                    </div>
-                </a>
-                """, unsafe_allow_html=True)
+                st.markdown(f"""<a href='{n['link']}' target='_blank' class='news-card-row'><div class='news-content'><div style="color:#666; font-size:10px; font-weight:700; text-transform:uppercase; margin-bottom:4px;">{source}</div><div class='news-title'>{n['title']}</div></div></a>""", unsafe_allow_html=True)
         with news_cols[0]: render_home_news("https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664", "CNBC")
         with news_cols[1]: render_home_news("http://rss.cnn.com/rss/money_latest.rss", "CNN Business")
 
