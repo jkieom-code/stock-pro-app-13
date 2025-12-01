@@ -29,8 +29,15 @@ st.markdown("""
     .stApp { background-color: #ffffff; color: #333333; }
     
     /* Logo Styles */
-    .prostock-logo-sidebar { font-size: 32px; font-weight: 900; color: #0d6efd; margin-bottom: 5px; text-align: center; }
-    .prostock-logo-sidebar span { color: #333; }
+    .prostock-logo-sidebar { 
+        font-size: 28px; 
+        font-weight: 900; 
+        color: #0d6efd; 
+        margin-bottom: 15px; 
+        text-align: center; 
+        letter-spacing: -0.5px;
+    }
+    .prostock-logo-sidebar span { color: #111; }
     
     .homepage-logo { font-size: 60px; font-weight: 900; color: #0d6efd; text-align: center; margin-bottom: 10px; }
     .homepage-logo span { color: #333; }
@@ -69,16 +76,36 @@ st.markdown("""
         display: flex;
         flex-direction: column;
         background: white;
-        border-bottom: 1px solid #eee;
+        border: 1px solid #eee;
+        border-left: 4px solid #0d6efd;
         padding: 15px;
         text-decoration: none;
-        transition: background-color 0.2s;
-        border-left: 3px solid transparent;
+        transition: all 0.2s ease;
+        margin-bottom: 10px;
+        border-radius: 6px;
     }
-    .news-card-row:hover { background-color: #fcfcfc; border-left: 3px solid #0d6efd; }
+    .news-card-row:hover { 
+        background-color: #f8f9fa; 
+        transform: translateX(3px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
     .news-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
-    .news-title { font-size: 15px; font-weight: 600; color: #1a0dab; line-height: 1.4; margin-bottom: 5px; text-decoration: none; display: block;}
-    .news-meta { font-size: 12px; color: #666; }
+    .news-title { 
+        font-size: 15px; 
+        font-weight: 600; 
+        color: #212529; 
+        line-height: 1.4; 
+        margin-bottom: 8px; 
+        text-decoration: none; 
+        display: block;
+    }
+    .news-meta { 
+        font-size: 11px; 
+        color: #888; 
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
     
     /* Gemini Sidebar */
     .gemini-box {
@@ -118,9 +145,9 @@ st.markdown("""
         position: relative;
         color: white;
         font-size: 56px;
-        font-weight: 700;
-        font-family: Georgia, serif;
-        font-style: italic;
+        font-weight: 900;
+        /* Reverted to Roboto/System font */
+        font-family: 'Roboto', sans-serif;
         text-align: center;
         text-shadow: 0 2px 10px rgba(0,0,0,0.8);
         padding: 20px;
@@ -243,14 +270,44 @@ if not st.session_state['logged_in'] and not st.session_state['guest_mode']:
 
 # --- ASSET MAP ---
 ASSET_MAP = {
+    # Top US Stocks
+    "APPLE": "AAPL", "MICROSOFT": "MSFT", "NVIDIA": "NVDA", "AMAZON": "AMZN", "GOOGLE": "GOOGL",
+    "META": "META", "TESLA": "TSLA", "BERKSHIRE": "BRK-B", "TSMC": "TSM", "BROADCOM": "AVGO",
+    "LILLY": "LLY", "JPMORGAN": "JPM", "VISA": "V", "WALMART": "WMT", "EXXON": "XOM",
+    "MASTERCARD": "MA", "UNITEDHEALTH": "UNH", "JOHNSON": "JNJ", "PROCTER": "PG", "HOME DEPOT": "HD",
+    "COSTCO": "COST", "ABBVIE": "ABBV", "MERCK": "MRK", "CHEVRON": "CVX", "AMD": "AMD",
+    "NETFLIX": "NFLX", "ADOBE": "ADBE", "SALESFORCE": "CRM", "COCA COLA": "KO", "PEPSI": "PEP",
+    "BANK OF AMERICA": "BAC", "THERMO FISHER": "TMO", "CISCO": "CSCO", "INTEL": "INTC",
+    "DISNEY": "DIS", "NIKE": "NKE", "MCDONALDS": "MCD", "STARBUCKS": "SBUX", "PAYPAL": "PYPL",
+    "COINBASE": "COIN", "PALANTIR": "PLTR", "GAMESTOP": "GME", "AMC": "AMC",
+
+    # Top Crypto
     "BITCOIN": "BTC-USD", "BTC": "BTC-USD", "ETHEREUM": "ETH-USD", "ETH": "ETH-USD",
-    "SOLANA": "SOL-USD", "XRP": "XRP-USD", "GOLD": "GC=F", "SILVER": "SI=F",
-    "OIL": "CL=F", "USD/KRW": "KRW=X", "APPLE": "AAPL", "TESLA": "TSLA",
-    "NVIDIA": "NVDA", "GOOGLE": "GOOGL", "AMAZON": "AMZN", "SAMSUNG": "005930.KS", "DISNEY": "DIS",
-    "KOSPI": "^KS11", "KOSDAQ": "^KQ11",
-    "비트코인": "BTC-USD", "이더리움": "ETH-USD", "리플": "XRP-USD", "솔라나": "SOL-USD", 
-    "삼성전자": "005930.KS", "삼성": "005930.KS", "애플": "AAPL", "테슬라": "TSLA", "엔비디아": "NVDA",
-    "금": "GC=F", "원유": "CL=F", "환율": "KRW=X", "원달러": "KRW=X", "코스피": "^KS11", "코스닥": "^KQ11"
+    "SOLANA": "SOL-USD", "XRP": "XRP-USD", "BNB": "BNB-USD", "DOGECOIN": "DOGE-USD",
+    "CARDANO": "ADA-USD", "TRON": "TRX-USD", "AVALANCHE": "AVAX-USD", "SHIBA INU": "SHIB-USD",
+    "TONCOIN": "TON-USD", "POLKADOT": "DOT-USD", "LINK": "LINK-USD", "LITECOIN": "LTC-USD",
+
+    # Top Commodities
+    "GOLD": "GC=F", "SILVER": "SI=F", "COPPER": "HG=F", "PLATINUM": "PL=F", "PALLADIUM": "PA=F",
+    "OIL": "CL=F", "CRUDE OIL": "CL=F", "WTI": "CL=F", "BRENT": "BZ=F", "NATURAL GAS": "NG=F",
+    "CORN": "ZC=F", "SOYBEANS": "ZS=F", "WHEAT": "ZW=F", "SUGAR": "SB=F", "COFFEE": "KC=F",
+
+    # Major Currencies
+    "USD/KRW": "KRW=X", "WON": "KRW=X", "EUR/USD": "EURUSD=X", "JPY/USD": "JPY=X", 
+    "GBP/USD": "GBPUSD=X", "AUD/USD": "AUDUSD=X", "CAD/USD": "CAD=X", "CNY/USD": "CNY=X",
+    "CHF/USD": "CHF=X",
+
+    # Indices
+    "S&P 500": "^GSPC", "DOW JONES": "^DJI", "NASDAQ": "^IXIC", "RUSSELL 2000": "^RUT",
+    "KOSPI": "^KS11", "KOSDAQ": "^KQ11", "NIKKEI": "^N225", "FTSE 100": "^FTSE",
+
+    # Korean (Hangul)
+    "삼성전자": "005930.KS", "SK하이닉스": "000660.KS", "현대차": "005380.KS", "기아": "000270.KS",
+    "LG에너지솔루션": "373220.KS", "삼성바이오로직스": "207940.KS", "셀트리온": "068270.KS", 
+    "네이버": "035420.KS", "카카오": "035720.KS", "포스코홀딩스": "005490.KS", "LG화학": "051910.KS",
+    "비트코인": "BTC-USD", "이더리움": "ETH-USD", "리플": "XRP-USD", "솔라나": "SOL-USD",
+    "애플": "AAPL", "테슬라": "TSLA", "엔비디아": "NVDA", "마이크로소프트": "MSFT", "아마존": "AMZN",
+    "구글": "GOOGL", "금": "GC=F", "은": "SI=F", "원유": "CL=F", "환율": "KRW=X"
 }
 
 # --- Helper: Smart Search Wrapper ---
@@ -419,9 +476,19 @@ def get_smart_response(query, ticker, data, api_key):
     if not api_key:
         return "⚠️ API Key missing. Please check settings."
 
+    # Check for data availability
     latest_price = data['Close'].iloc[-1] if not data.empty else "N/A"
-    rsi_val = f"{data['RSI'].iloc[-1]:.2f}" if 'RSI' in data.columns and not pd.isna(data['RSI'].iloc[-1]) else "N/A"
-    sma_val = f"{data['SMA'].iloc[-1]:.2f}" if 'SMA' in data.columns and not pd.isna(data['SMA'].iloc[-1]) else "N/A"
+    
+    # Safe extraction of RSI/SMA
+    rsi_val = "N/A"
+    if 'RSI' in data.columns and not data['RSI'].empty:
+        val = data['RSI'].iloc[-1]
+        if not pd.isna(val): rsi_val = f"{val:.2f}"
+        
+    sma_val = "N/A"
+    if 'SMA' in data.columns and not data['SMA'].empty:
+        val = data['SMA'].iloc[-1]
+        if not pd.isna(val): sma_val = f"{val:.2f}"
 
     prompt = f"""
     You are a professional financial analyst. Analyze {ticker} based on this real-time data:
@@ -475,7 +542,14 @@ mode = st.session_state['mode']
 if mode == "Home":
     # Guest Mode Header Check
     if st.session_state.get('guest_mode', False):
-        st.markdown("""<style>[data-testid="stSidebar"] { display: none; }</style>""", unsafe_allow_html=True)
+        # CSS for removing sidebar in guest mode
+        st.markdown("""
+            <style>
+            [data-testid="stSidebar"] { display: none; }
+            </style>
+        """, unsafe_allow_html=True)
+
+        # GUEST HOME HEADER
         h1, h2, h3 = st.columns([1,2,1])
         with h1: st.markdown('<div class="prostock-logo" style="font-size:24px;">Pro<span>Stock</span></div>', unsafe_allow_html=True)
         with h2: 
@@ -498,6 +572,7 @@ if mode == "Home":
         """, unsafe_allow_html=True)
         
     else:
+        # STANDARD HOME (LOGGED IN)
         st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
         c_fill, c_acc = st.columns([3, 1])
         with c_acc:
