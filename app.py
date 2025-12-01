@@ -190,6 +190,7 @@ if 'ticker_search' not in st.session_state: st.session_state['ticker_search'] = 
 if 'lang' not in st.session_state: st.session_state['lang'] = "English"
 if 'chat_history' not in st.session_state: st.session_state['chat_history'] = []
 if 'gemini_api_key' not in st.session_state: 
+    # Set default API Key provided by user
     st.session_state['gemini_api_key'] = "AIzaSyB-RYuBGcCseCvU0a5EXlR8aB1V7KvzDeU"
 
 # --- TRANSLATION DICTIONARY ---
@@ -258,7 +259,16 @@ if not st.session_state['logged_in'] and not st.session_state['guest_mode']:
     .stApp { background-color: #000000 !important; }
     [data-testid="stHeader"] { background-color: #000000 !important; }
     .login-box { background-color: #111111; padding: 40px; border-radius: 12px; border: 1px solid #222; border-top: 3px solid #0d6efd; box-shadow: 0 0 30px rgba(13, 110, 253, 0.15); text-align: center; margin-top: 50px; }
-    .login-subtitle { color: #e0e0e0; font-size: 14px; margin-bottom: 30px; letter-spacing: 1px; text-transform: uppercase; }
+    
+    /* Fixed: Make subtitle text visible against black background */
+    .login-subtitle { 
+        color: #e0e0e0; 
+        font-size: 14px; 
+        margin-bottom: 30px; 
+        letter-spacing: 1px; 
+        text-transform: uppercase; 
+    }
+    
     [data-testid="stTextInput"] input { background-color: #1a1a1a !important; color: #ffffff !important; border: 1px solid #333 !important; }
     [data-testid="stTextInput"] input:focus { border-color: #0d6efd !important; box-shadow: 0 0 0 1px #0d6efd !important; }
     [data-testid="stTextInput"] label { color: #888 !important; }
