@@ -100,39 +100,6 @@ st.markdown("""
         border: 1px solid #eee;
     }
     
-    /* Guest Homepage Styling */
-    .guest-hero {
-        background-image: url('https://upload.wikimedia.org/wikipedia/commons/f/f3/New_York_Stock_Exchange_floor_2019.jpg');
-        background-size: cover;
-        background-position: center;
-        height: 600px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 12px;
-        position: relative;
-        margin-top: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-    .guest-hero::before {
-        content: "";
-        position: absolute;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.5); /* Dark overlay */
-        border-radius: 12px;
-    }
-    .guest-hero-text {
-        position: relative;
-        color: white;
-        font-size: 56px;
-        font-weight: 700;
-        font-family: Georgia, serif; /* Georgia Font as requested */
-        font-style: italic;
-        text-align: center;
-        text-shadow: 0 2px 10px rgba(0,0,0,0.8);
-        padding: 20px;
-    }
-
     /* Loading */
     .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; animation: fadein 1s; }
     
@@ -149,7 +116,6 @@ db = get_database()
 
 if 'user_id' not in st.session_state: st.session_state['user_id'] = None
 if 'logged_in' not in st.session_state: st.session_state['logged_in'] = False
-if 'guest_mode' not in st.session_state: st.session_state['guest_mode'] = False
 if 'splash_shown' not in st.session_state: st.session_state['splash_shown'] = False
 if 'mode' not in st.session_state: st.session_state['mode'] = "Home" 
 if 'ticker_search' not in st.session_state: st.session_state['ticker_search'] = ""
@@ -158,6 +124,7 @@ if 'chat_history' not in st.session_state: st.session_state['chat_history'] = []
 if 'gemini_api_key' not in st.session_state: 
     # Set default API Key provided by user
     st.session_state['gemini_api_key'] = "AIzaSyB-RYuBGcCseCvU0a5EXlR8aB1V7KvzDeU"
+if 'guest_mode' not in st.session_state: st.session_state['guest_mode'] = False
 
 # --- TRANSLATION DICTIONARY ---
 TRANS = {
@@ -491,7 +458,7 @@ if mode == "Home":
 
         # GUEST HOME HEADER
         h1, h2, h3 = st.columns([1,2,1])
-        with h1: st.markdown('<div style="font-size: 40px; font-weight:900; color: #0d6efd; line-height: 1;">Pro<span style="color:#333;">Stock</span></div>', unsafe_allow_html=True)
+        with h1: st.markdown('<div class="prostock-logo" style="font-size:24px;">Pro<span>Stock</span></div>', unsafe_allow_html=True)
         with h2: 
              q = st.text_input("Search", placeholder=txt("Search_Ph"), label_visibility="collapsed")
              if q:
@@ -508,10 +475,11 @@ if mode == "Home":
                  if st.button("Sign Up", type="primary", use_container_width=True):
                      st.session_state['guest_mode'] = False; st.session_state['logged_in'] = False; st.rerun()
 
-        # GUEST HERO
+        # GUEST HERO (Standard Text)
         st.markdown(f"""
-        <div class="guest-hero">
-            <div class="guest-hero-text">Market Intelligence for the Modern Investor</div>
+        <div style="padding: 80px 20px; text-align: center; background: #f8f9fa; border-radius: 12px; margin-top: 20px;">
+            <h1 style="font-size: 48px; font-weight: 900; color: #333; font-family: Georgia, serif; margin-bottom: 10px;">ProStock</h1>
+            <p style="font-size: 20px; color: #666;">Professional Personal Banking</p>
         </div>
         """, unsafe_allow_html=True)
         
