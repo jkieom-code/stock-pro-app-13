@@ -21,58 +21,66 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# --- NEW LOGO URL ---
+PROSTOCK_LOGO_URL = "https://i.imgur.com/Kq7QZgG.png" # Placeholder for your uploaded image
+
 # --- Custom CSS ---
-st.markdown("""
+st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
-    html, body, [class*="css"] { font-family: 'Roboto', sans-serif; }
-    .stApp { background-color: #ffffff; color: #333333; }
+    html, body, [class*="css"] {{ font-family: 'Roboto', sans-serif; }}
+    .stApp {{ background-color: #ffffff; color: #333333; }}
     
-    /* Logo Styles */
-    .prostock-logo-sidebar { 
-        font-size: 28px; 
-        font-weight: 900; 
-        color: #0d6efd; 
-        margin-bottom: 15px; 
-        text-align: center; 
-        letter-spacing: -0.5px;
-    }
-    .prostock-logo-sidebar span { color: #111; }
-    
-    .homepage-logo { font-size: 60px; font-weight: 900; color: #0d6efd; text-align: center; margin-bottom: 10px; }
-    .homepage-logo span { color: #333; }
+    /* Logo Styles - Image Based */
+    .prostock-logo-img {{
+        height: 40px;
+        width: auto;
+        vertical-align: middle;
+    }}
+    .prostock-logo-sidebar {{ 
+        text-align: center;
+        margin-bottom: 15px;
+    }}
+    .homepage-logo-container {{
+        text-align: center;
+        margin-bottom: 10px;
+    }}
+    .homepage-logo-img {{
+        height: 70px;
+        width: auto;
+    }}
     
     /* Homepage Elements */
-    .hero-container { padding: 20px 20px; text-align: center; }
+    .hero-container {{ padding: 20px 20px; text-align: center; }}
     
     /* Trending Cards */
-    .trend-card {
+    .trend-card {{
         background: white; border: 1px solid #f0f0f0; border-radius: 12px; padding: 20px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.03); transition: all 0.3s ease; height: 100%;
-    }
-    .trend-card:hover { box-shadow: 0 8px 20px rgba(13, 110, 253, 0.1); transform: translateY(-3px); border-color: #0d6efd; }
-    .trend-header { font-size: 16px; color: #333; font-weight: 800; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #f8f9fa; padding-bottom: 10px; }
-    .trend-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f8f9fa; font-size: 14px; }
-    .trend-item:last-child { border-bottom: none; }
-    .trend-name { font-weight: 600; color: #555; }
-    .trend-price-badge { font-weight: 700; padding: 4px 8px; border-radius: 6px; font-size: 12px; }
+    }}
+    .trend-card:hover {{ box-shadow: 0 8px 20px rgba(13, 110, 253, 0.1); transform: translateY(-3px); border-color: #0d6efd; }}
+    .trend-header {{ font-size: 16px; color: #333; font-weight: 800; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #f8f9fa; padding-bottom: 10px; }}
+    .trend-item {{ display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f8f9fa; font-size: 14px; }}
+    .trend-item:last-child {{ border-bottom: none; }}
+    .trend-name {{ font-weight: 600; color: #555; }}
+    .trend-price-badge {{ font-weight: 700; padding: 4px 8px; border-radius: 6px; font-size: 12px; }}
     
     /* Account Top Right */
-    .account-bar { display: flex; justify-content: flex-end; align-items: center; gap: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; margin-bottom: 20px; }
-    .user-badge { font-weight: 600; color: #555; background: #e9ecef; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
+    .account-bar {{ display: flex; justify-content: flex-end; align-items: center; gap: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; margin-bottom: 20px; }}
+    .user-badge {{ font-weight: 600; color: #555; background: #e9ecef; padding: 5px 10px; border-radius: 20px; font-size: 12px; }}
     
     /* Header & Logo Integration */
-    .finance-header { background-color: #ffffff; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px; margin-bottom: 20px; margin-top: 10px; }
-    .asset-logo-img { height: 50px; width: 50px; border-radius: 50%; object-fit: contain; margin-right: 15px; border: 1px solid #eee; background: white; vertical-align: middle; }
+    .finance-header {{ background-color: #ffffff; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px; margin-bottom: 20px; margin-top: 10px; }}
+    .asset-logo-img {{ height: 50px; width: 50px; border-radius: 50%; object-fit: contain; margin-right: 15px; border: 1px solid #eee; background: white; vertical-align: middle; }}
     
     /* Stats Grid */
-    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px; margin-top: 15px; }
-    .stat-item { font-size: 14px; }
-    .stat-label { color: #888; font-size: 12px; }
-    .stat-value { font-weight: 600; color: #333; }
+    .stat-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px; margin-top: 15px; }}
+    .stat-item {{ font-size: 14px; }}
+    .stat-label {{ color: #888; font-size: 12px; }}
+    .stat-value {{ font-weight: 600; color: #333; }}
     
     /* News Feed (Clean Text Style - No Images) */
-    .news-card-row {
+    .news-card-row {{
         display: flex;
         flex-direction: column;
         background: white;
@@ -83,14 +91,14 @@ st.markdown("""
         transition: all 0.2s ease;
         margin-bottom: 10px;
         border-radius: 6px;
-    }
-    .news-card-row:hover { 
+    }}
+    .news-card-row:hover {{ 
         background-color: #f8f9fa; 
         transform: translateX(3px);
         box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-    .news-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
-    .news-title { 
+    }}
+    .news-content {{ flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }}
+    .news-title {{ 
         font-size: 15px; 
         font-weight: 600; 
         color: #212529; 
@@ -98,37 +106,37 @@ st.markdown("""
         margin-bottom: 8px; 
         text-decoration: none; 
         display: block;
-    }
-    .news-meta { 
+    }}
+    .news-meta {{ 
         font-size: 11px; 
         color: #888; 
         text-transform: uppercase;
         font-weight: 700;
         letter-spacing: 0.5px;
-    }
+    }}
     
     /* Gemini Sidebar */
-    .gemini-box {
+    .gemini-box {{
         background-color: #f8f9fa;
         border-left: 1px solid #eee;
         padding: 20px;
         height: 100%;
         min-height: 600px;
-    }
-    .gemini-header {
+    }}
+    .gemini-header {{
         font-size: 20px; font-weight: 700; color: #333; margin-bottom: 20px;
         display: flex; align-items: center; gap: 10px;
-    }
-    .gemini-logo-icon { width: 30px; height: 30px; }
+    }}
+    .gemini-logo-icon {{ width: 30px; height: 30px; }}
     
-    .chat-bubble {
+    .chat-bubble {{
         background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px;
         box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-size: 13px;
         border: 1px solid #eee;
-    }
+    }}
     
     /* Guest Homepage Styling */
-    .guest-hero {
+    .guest-hero {{
         /* Fallback gradient if image fails (Signature Black & Blue) */
         background: linear-gradient(135deg, #000000 0%, #001f3f 100%);
         height: 500px;
@@ -140,8 +148,8 @@ st.markdown("""
         margin-top: 20px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         overflow: hidden;
-    }
-    .guest-hero-text {
+    }}
+    .guest-hero-text {{
         position: relative;
         color: white;
         font-size: 56px;
@@ -152,14 +160,14 @@ st.markdown("""
         text-shadow: 0 2px 10px rgba(0,0,0,0.8);
         padding: 20px;
         z-index: 2;
-    }
+    }}
 
     /* Loading */
-    .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; animation: fadein 1s; }
+    .loading-container {{ display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; animation: fadein 1s; }}
     
     /* Layout Fixes */
-    .block-container { padding-top: 5rem; max-width: 98%; }
-    #MainMenu {visibility: hidden;} footer {visibility: hidden;}
+    .block-container {{ padding-top: 5rem; max-width: 98%; }}
+    #MainMenu {{visibility: hidden;}} footer {{visibility: hidden;}}
     </style>
     """, unsafe_allow_html=True)
 
@@ -214,7 +222,7 @@ def txt(key):
 if not st.session_state['splash_shown']:
     placeholder = st.empty()
     with placeholder.container():
-        st.markdown("""<div class="loading-container"><h1 style='font-size: 50px; font-weight:900; color: #0d6efd;'>Pro<span style="color:#333;">Stock</span></h1><p style='color: #666; margin-bottom: 10px;'>Institutional Grade Analytics</p><p style='color: #0d6efd; font-size: 18px; font-weight: 500;'>professional personal banking</p></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class="loading-container"><img src="{PROSTOCK_LOGO_URL}" style="height: 80px;"><p style='color: #666; margin-bottom: 10px;'>Institutional Grade Analytics</p><p style='color: #0d6efd; font-size: 18px; font-weight: 500;'>professional personal banking</p></div>""", unsafe_allow_html=True)
     time.sleep(3)
     placeholder.empty()
     st.session_state['splash_shown'] = True
@@ -234,24 +242,23 @@ def login_later():
 
 # --- LOGIN SCREEN ---
 if not st.session_state['logged_in'] and not st.session_state['guest_mode']:
-    st.markdown("""
+    st.markdown(f"""
     <style>
-    .stApp { background-color: #000000 !important; }
-    [data-testid="stHeader"] { background-color: #000000 !important; }
-    .login-box { background-color: #111111; padding: 40px; border-radius: 12px; border: 1px solid #222; border-top: 3px solid #0d6efd; box-shadow: 0 0 30px rgba(13, 110, 253, 0.15); text-align: center; margin-top: 50px; }
-    .login-title { color: #ffffff; font-family: 'Roboto', sans-serif; font-weight: 900; font-size: 36px; margin-bottom: 5px; }
-    .login-subtitle { color: #666; font-size: 14px; margin-bottom: 30px; letter-spacing: 1px; text-transform: uppercase; }
-    [data-testid="stTextInput"] input { background-color: #1a1a1a !important; color: #ffffff !important; border: 1px solid #333 !important; }
-    [data-testid="stTextInput"] input:focus { border-color: #0d6efd !important; box-shadow: 0 0 0 1px #0d6efd !important; }
-    [data-testid="stTextInput"] label { color: #888 !important; }
-    .stButton > button { background-color: #000000 !important; color: #0d6efd !important; border: 2px solid #0d6efd !important; border-radius: 8px !important; font-weight: bold !important; transition: all 0.3s ease !important; }
-    .stButton > button:hover { background-color: #0d6efd !important; color: #000000 !important; box-shadow: 0 0 15px rgba(13, 110, 253, 0.6) !important; }
+    .stApp {{ background-color: #000000 !important; }}
+    [data-testid="stHeader"] {{ background-color: #000000 !important; }}
+    .login-box {{ background-color: #111111; padding: 40px; border-radius: 12px; border: 1px solid #222; border-top: 3px solid #0d6efd; box-shadow: 0 0 30px rgba(13, 110, 253, 0.15); text-align: center; margin-top: 50px; }}
+    .login-subtitle {{ color: #666; font-size: 14px; margin-bottom: 30px; letter-spacing: 1px; text-transform: uppercase; }}
+    [data-testid="stTextInput"] input {{ background-color: #1a1a1a !important; color: #ffffff !important; border: 1px solid #333 !important; }}
+    [data-testid="stTextInput"] input:focus {{ border-color: #0d6efd !important; box-shadow: 0 0 0 1px #0d6efd !important; }}
+    [data-testid="stTextInput"] label {{ color: #888 !important; }}
+    .stButton > button {{ background-color: #000000 !important; color: #0d6efd !important; border: 2px solid #0d6efd !important; border-radius: 8px !important; font-weight: bold !important; transition: all 0.3s ease !important; }}
+    .stButton > button:hover {{ background-color: #0d6efd !important; color: #000000 !important; box-shadow: 0 0 15px rgba(13, 110, 253, 0.6) !important; }}
     </style>
     """, unsafe_allow_html=True)
     
     c1,c2,c3 = st.columns([1,1.5,1])
     with c2:
-        st.markdown("""<div class="login-box"><div class="login-title">Pro<span style="color:#0d6efd;">Stock</span></div><p class="login-subtitle">Professional Personal Banking</p></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class="login-box"><img src="{PROSTOCK_LOGO_URL}" style="height: 60px; margin-bottom: 10px;"><p class="login-subtitle">Professional Personal Banking</p></div>""", unsafe_allow_html=True)
         uid = st.text_input("User ID", max_chars=6, type="password", placeholder="Access Code (6 Digits)")
         b1,b2=st.columns(2)
         with b1: 
@@ -522,7 +529,7 @@ def submit_chat():
         st.session_state.chat_input_val = "" 
 
 # --- NAVIGATION ---
-st.sidebar.markdown('<div class="prostock-logo-sidebar">Pro<span>Stock</span></div>', unsafe_allow_html=True)
+st.sidebar.markdown(f'<div class="prostock-logo-sidebar"><img src="{PROSTOCK_LOGO_URL}" class="prostock-logo-img"></div>', unsafe_allow_html=True)
 if st.sidebar.button(txt("Home"), type="secondary", use_container_width=True): st.session_state['mode'] = "Home"
 if st.sidebar.button("🌐 Language: " + st.session_state['lang']):
     st.session_state['lang'] = "한국어" if st.session_state['lang'] == "English" else "English"
@@ -551,7 +558,7 @@ if mode == "Home":
 
         # GUEST HOME HEADER
         h1, h2, h3 = st.columns([1,2,1])
-        with h1: st.markdown('<div class="prostock-logo" style="font-size:24px;">Pro<span>Stock</span></div>', unsafe_allow_html=True)
+        with h1: st.markdown(f'<div class="prostock-logo" style="font-size:24px;"><img src="{PROSTOCK_LOGO_URL}" class="prostock-logo-img"></div>', unsafe_allow_html=True)
         with h2: 
              q = st.text_input("Search", placeholder=txt("Search_Ph"), label_visibility="collapsed")
              if q: smart_search(q)
@@ -580,7 +587,7 @@ if mode == "Home":
                 if st.button(txt("Logout"), use_container_width=True): logout_user()
                 if st.button(txt("Delete"), type="primary", use_container_width=True): delete_account()
 
-        st.markdown(f"""<div class="hero-container"><div class="homepage-logo">Pro<span>Stock</span></div><p style="font-size:18px; color:#666;">{txt("Hero_Sub")}</p></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class="hero-container"><div class="homepage-logo-container"><img src="{PROSTOCK_LOGO_URL}" class="homepage-logo-img"></div><p style="font-size:18px; color:#666;">{txt("Hero_Sub")}</p></div>""", unsafe_allow_html=True)
         c1, c2, c3 = st.columns([1, 2, 1])
         with c2:
             big_search = st.text_input("🔍 " + txt("Search"), placeholder=txt("Search_Ph"), label_visibility="collapsed")
@@ -636,7 +643,7 @@ elif mode == "Asset Terminal":
 
     with main_col:
         default_ticker = st.session_state.get('ticker_search', "")
-        st.markdown('<div class="prostock-logo" style="font-size:24px;">Pro<span>Stock</span> Terminal</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="prostock-logo" style="font-size:24px;"><img src="{PROSTOCK_LOGO_URL}" class="prostock-logo-img"> Terminal</div>', unsafe_allow_html=True)
         
         c_search, c_btn = st.columns([4, 1])
         with c_search:
