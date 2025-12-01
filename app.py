@@ -67,7 +67,7 @@ st.markdown("""
     /* News Feed (Clean Text Style - No Images) */
     .news-card-row {
         display: flex;
-        flex-direction: column; /* Stack vertically for text only */
+        flex-direction: column;
         background: white;
         border-bottom: 1px solid #eee;
         padding: 15px;
@@ -100,6 +100,33 @@ st.markdown("""
         border: 1px solid #eee;
     }
     
+    /* Guest Homepage Styling */
+    .guest-hero {
+        /* Fallback gradient if image fails (Signature Black & Blue) */
+        background: linear-gradient(135deg, #000000 0%, #001f3f 100%);
+        height: 500px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        position: relative;
+        margin-top: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        overflow: hidden;
+    }
+    .guest-hero-text {
+        position: relative;
+        color: white;
+        font-size: 56px;
+        font-weight: 700;
+        font-family: Georgia, serif;
+        font-style: italic;
+        text-align: center;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        padding: 20px;
+        z-index: 2;
+    }
+
     /* Loading */
     .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; animation: fadein 1s; }
     
@@ -116,15 +143,14 @@ db = get_database()
 
 if 'user_id' not in st.session_state: st.session_state['user_id'] = None
 if 'logged_in' not in st.session_state: st.session_state['logged_in'] = False
+if 'guest_mode' not in st.session_state: st.session_state['guest_mode'] = False
 if 'splash_shown' not in st.session_state: st.session_state['splash_shown'] = False
 if 'mode' not in st.session_state: st.session_state['mode'] = "Home" 
 if 'ticker_search' not in st.session_state: st.session_state['ticker_search'] = ""
 if 'lang' not in st.session_state: st.session_state['lang'] = "English"
 if 'chat_history' not in st.session_state: st.session_state['chat_history'] = []
 if 'gemini_api_key' not in st.session_state: 
-    # Set default API Key provided by user
     st.session_state['gemini_api_key'] = "AIzaSyB-RYuBGcCseCvU0a5EXlR8aB1V7KvzDeU"
-if 'guest_mode' not in st.session_state: st.session_state['guest_mode'] = False
 
 # --- TRANSLATION DICTIONARY ---
 TRANS = {
@@ -226,6 +252,16 @@ ASSET_MAP = {
     "삼성전자": "005930.KS", "삼성": "005930.KS", "애플": "AAPL", "테슬라": "TSLA", "엔비디아": "NVDA",
     "금": "GC=F", "원유": "CL=F", "환율": "KRW=X", "원달러": "KRW=X", "코스피": "^KS11", "코스닥": "^KQ11"
 }
+
+# --- Helper: Smart Search Wrapper ---
+def smart_search(query):
+    if query:
+        q_upper = query.upper().strip()
+        # Look up in map or use direct
+        ticker_res = ASSET_MAP.get(q_upper, q_upper)
+        st.session_state['ticker_search'] = ticker_res
+        st.session_state['mode'] = "Asset Terminal"
+        st.rerun()
 
 @st.cache_data(ttl=10)
 def get_live_price(ticker):
@@ -383,19 +419,9 @@ def get_smart_response(query, ticker, data, api_key):
     if not api_key:
         return "⚠️ API Key missing. Please check settings."
 
-    # Check for data availability
     latest_price = data['Close'].iloc[-1] if not data.empty else "N/A"
-    
-    # Safe extraction of RSI/SMA
-    rsi_val = "N/A"
-    if 'RSI' in data.columns and not data['RSI'].empty:
-        val = data['RSI'].iloc[-1]
-        if not pd.isna(val): rsi_val = f"{val:.2f}"
-        
-    sma_val = "N/A"
-    if 'SMA' in data.columns and not data['SMA'].empty:
-        val = data['SMA'].iloc[-1]
-        if not pd.isna(val): sma_val = f"{val:.2f}"
+    rsi_val = f"{data['RSI'].iloc[-1]:.2f}" if 'RSI' in data.columns and not pd.isna(data['RSI'].iloc[-1]) else "N/A"
+    sma_val = f"{data['SMA'].iloc[-1]:.2f}" if 'SMA' in data.columns and not pd.isna(data['SMA'].iloc[-1]) else "N/A"
 
     prompt = f"""
     You are a professional financial analyst. Analyze {ticker} based on this real-time data:
@@ -449,23 +475,12 @@ mode = st.session_state['mode']
 if mode == "Home":
     # Guest Mode Header Check
     if st.session_state.get('guest_mode', False):
-        # CSS for removing sidebar in guest mode
-        st.markdown("""
-            <style>
-            [data-testid="stSidebar"] { display: none; }
-            </style>
-        """, unsafe_allow_html=True)
-
-        # GUEST HOME HEADER
+        st.markdown("""<style>[data-testid="stSidebar"] { display: none; }</style>""", unsafe_allow_html=True)
         h1, h2, h3 = st.columns([1,2,1])
         with h1: st.markdown('<div class="prostock-logo" style="font-size:24px;">Pro<span>Stock</span></div>', unsafe_allow_html=True)
         with h2: 
              q = st.text_input("Search", placeholder=txt("Search_Ph"), label_visibility="collapsed")
-             if q:
-                 q_upper = q.upper().strip()
-                 st.session_state['ticker_search'] = ASSET_MAP.get(q_upper, q_upper)
-                 st.session_state['mode'] = "Asset Terminal"
-                 st.rerun()
+             if q: smart_search(q)
         with h3:
             b1, b2 = st.columns(2)
             with b1: 
@@ -475,16 +490,14 @@ if mode == "Home":
                  if st.button("Sign Up", type="primary", use_container_width=True):
                      st.session_state['guest_mode'] = False; st.session_state['logged_in'] = False; st.rerun()
 
-        # GUEST HERO (Standard Text)
+        # GUEST HERO
         st.markdown(f"""
-        <div style="padding: 80px 20px; text-align: center; background: #f8f9fa; border-radius: 12px; margin-top: 20px;">
-            <h1 style="font-size: 48px; font-weight: 900; color: #333; font-family: Georgia, serif; margin-bottom: 10px;">ProStock</h1>
-            <p style="font-size: 20px; color: #666;">Professional Personal Banking</p>
+        <div class="guest-hero">
+            <div class="guest-hero-text">Market Intelligence for the Modern Investor</div>
         </div>
         """, unsafe_allow_html=True)
         
     else:
-        # STANDARD HOME (LOGGED IN)
         st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
         c_fill, c_acc = st.columns([3, 1])
         with c_acc:
@@ -496,12 +509,8 @@ if mode == "Home":
         c1, c2, c3 = st.columns([1, 2, 1])
         with c2:
             big_search = st.text_input("🔍 " + txt("Search"), placeholder=txt("Search_Ph"), label_visibility="collapsed")
-            if big_search:
-                q_upper = big_search.upper().strip()
-                ticker_res = ASSET_MAP.get(q_upper, q_upper) 
-                st.session_state['ticker_search'] = ticker_res
-                st.session_state['mode'] = "Asset Terminal"
-                st.rerun()
+            if big_search: smart_search(big_search)
+        
         st.markdown("<br>", unsafe_allow_html=True)
         t1, t2, t3, t4 = st.columns(4)
         def render_trend_card(title, assets):
@@ -553,7 +562,14 @@ elif mode == "Asset Terminal":
     with main_col:
         default_ticker = st.session_state.get('ticker_search', "")
         st.markdown('<div class="prostock-logo" style="font-size:24px;">Pro<span>Stock</span> Terminal</div>', unsafe_allow_html=True)
-        search_query = st.text_input(txt("Search"), value=default_ticker, placeholder=txt("Search_Ph"), label_visibility="collapsed")
+        
+        c_search, c_btn = st.columns([4, 1])
+        with c_search:
+            search_query = st.text_input(txt("Search"), value=default_ticker, placeholder=txt("Search_Ph"), label_visibility="collapsed")
+        with c_btn:
+            if st.button("Search", type="primary", use_container_width=True):
+                smart_search(search_query)
+
         ticker = ""; market_type = "Stocks"
         if search_query:
             q_upper = search_query.upper().strip()
@@ -567,16 +583,21 @@ elif mode == "Asset Terminal":
             elif market_type_sel == txt("Commodities"): market_type="Commodities"; ticker = {"Gold":"GC=F","Silver":"SI=F","Oil":"CL=F"}[st.sidebar.selectbox("Select", ["Gold","Silver","Oil"])]
             elif market_type_sel == txt("Forex"): market_type="Currencies/Forex"; ticker = {"USD/KRW":"KRW=X","EUR/USD":"EURUSD=X"}[st.sidebar.selectbox("Select", ["USD/KRW","EUR/USD"])]
             elif market_type_sel == txt("Crypto"): market_type="Crypto"; ticker = {"Bitcoin":"BTC-USD","Ethereum":"ETH-USD"}[st.sidebar.selectbox("Select", ["Bitcoin","Ethereum"])]
+        
         st.session_state['ticker_search'] = ticker
         
         # Sidebar Features if Logged In
         if not st.session_state.get('guest_mode', False):
-            user_favs = db[st.session_state['user_id']]['favorites']
+            # SAFE FAVORITES LOADING
+            uid = st.session_state.get('user_id')
+            if uid and uid not in db: db[uid] = {'favorites': []} # Auto-fix missing DB entry
+            user_favs = db[uid]['favorites']
+            
             is_fav = ticker in user_favs
             if st.sidebar.checkbox("⭐ Add to Favorites", value=is_fav):
-                if not is_fav: db[st.session_state['user_id']]['favorites'].append(ticker)
+                if not is_fav: db[uid]['favorites'].append(ticker)
             else:
-                if is_fav: db[st.session_state['user_id']]['favorites'].remove(ticker)
+                if is_fav: db[uid]['favorites'].remove(ticker)
             with st.sidebar.expander("⚙️ Chart Settings", expanded=True):
                 timeframe = st.selectbox("Interval", ["1 Minute", "5 Minute", "1 Hour", "1 Day"])
                 show_sma = st.toggle("SMA", True); show_bb = st.toggle("Bollinger Bands"); show_rsi = st.toggle("RSI")
@@ -694,14 +715,19 @@ elif mode == "Asset Terminal":
 # --- MODE: FAVORITES ---
 elif mode == "Favorites":
     st.title(txt("Watchlist"))
-    user_favs = db[st.session_state['user_id']]['favorites']
-    if not user_favs: st.info("No favorites.")
+    if st.session_state.get('guest_mode', False):
+        st.info("Favorites are not available in Guest Mode.")
     else:
-        favs = []
-        for s in user_favs:
-            p, c = get_live_price(s)
-            favs.append({"Ticker": s, "Price": f"${p:,.2f}", "Change": f"{c:+.2f}%"})
-        st.dataframe(pd.DataFrame(favs), use_container_width=True)
+        uid = st.session_state.get('user_id')
+        if uid and uid not in db: db[uid] = {'favorites': []}
+        user_favs = db[uid]['favorites']
+        if not user_favs: st.info("No favorites.")
+        else:
+            favs = []
+            for s in user_favs:
+                p, c = get_live_price(s)
+                favs.append({"Ticker": s, "Price": f"${p:,.2f}", "Change": f"{c:+.2f}%"})
+            st.dataframe(pd.DataFrame(favs), use_container_width=True)
 
 # --- MODE: MEDIA ---
 elif mode == "Media & News":
