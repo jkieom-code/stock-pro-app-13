@@ -21,24 +21,14 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- LOGO HTML COMPONENT (Text Version - Black/White & Blue) ---
+# --- LOGO HTML COMPONENT (CSS Version - Never Breaks) ---
 def get_logo_html(size="24px", dark_bg=False):
     # Use white text for 'Pro' if background is dark, else black. Blue remains the same.
     pro_color = "#ffffff" if dark_bg else "#333333"
     stock_color = "#0d6efd"
     
-    return f"""
-    <div style="
-        font-family: 'Roboto', sans-serif;
-        font-weight: 900;
-        font-size: {size};
-        letter-spacing: -0.5px;
-        color: {pro_color};
-        display: inline-block;
-    ">
-        Pro<span style="color: {stock_color};">Stock</span>
-    </div>
-    """
+    # Return unindented HTML string to prevent code block rendering
+    return f"""<div style="font-family: 'Roboto', sans-serif; font-weight: 900; font-size: {size}; letter-spacing: -0.5px; color: {pro_color}; display: inline-block;">Pro<span style="color: {stock_color};">Stock</span></div>"""
 
 # --- Custom CSS ---
 st.markdown("""
@@ -144,7 +134,6 @@ st.markdown("""
     
     /* Guest Homepage Styling */
     .guest-hero {
-        /* Professional Gradient Background */
         background: linear-gradient(135deg, #000000 0%, #001f3f 100%);
         height: 500px;
         display: flex;
@@ -191,7 +180,6 @@ if 'ticker_search' not in st.session_state: st.session_state['ticker_search'] = 
 if 'lang' not in st.session_state: st.session_state['lang'] = "English"
 if 'chat_history' not in st.session_state: st.session_state['chat_history'] = []
 if 'gemini_api_key' not in st.session_state: 
-    # Set default API Key provided by user
     st.session_state['gemini_api_key'] = "AIzaSyB-RYuBGcCseCvU0a5EXlR8aB1V7KvzDeU"
 
 # --- TRANSLATION DICTIONARY ---
@@ -229,13 +217,8 @@ def txt(key):
 if not st.session_state['splash_shown']:
     placeholder = st.empty()
     with placeholder.container():
-        st.markdown(f"""
-        <div class="loading-container">
-            {get_logo_html("60px")}
-            <p style='color: #666; margin-bottom: 10px; margin-top: 20px;'>Institutional Grade Analytics</p>
-            <p style='color: #0d6efd; font-size: 18px; font-weight: 500;'>professional personal banking</p>
-        </div>
-        """, unsafe_allow_html=True)
+        # NO INDENTATION in HTML string to prevent code block rendering
+        st.markdown(f"""<div class="loading-container">{get_logo_html("60px")}<p style='color: #666; margin-bottom: 10px; margin-top: 20px;'>Institutional Grade Analytics</p><p style='color: #0d6efd; font-size: 18px; font-weight: 500;'>professional personal banking</p></div>""", unsafe_allow_html=True)
     time.sleep(3)
     placeholder.empty()
     st.session_state['splash_shown'] = True
@@ -260,16 +243,7 @@ if not st.session_state['logged_in'] and not st.session_state['guest_mode']:
     .stApp { background-color: #000000 !important; }
     [data-testid="stHeader"] { background-color: #000000 !important; }
     .login-box { background-color: #111111; padding: 40px; border-radius: 12px; border: 1px solid #222; border-top: 3px solid #0d6efd; box-shadow: 0 0 30px rgba(13, 110, 253, 0.15); text-align: center; margin-top: 50px; }
-    
-    /* Fixed: Make subtitle text visible against black background */
-    .login-subtitle { 
-        color: #e0e0e0; 
-        font-size: 14px; 
-        margin-bottom: 30px; 
-        letter-spacing: 1px; 
-        text-transform: uppercase; 
-    }
-    
+    .login-subtitle { color: #e0e0e0; font-size: 14px; margin-bottom: 30px; letter-spacing: 1px; text-transform: uppercase; }
     [data-testid="stTextInput"] input { background-color: #1a1a1a !important; color: #ffffff !important; border: 1px solid #333 !important; }
     [data-testid="stTextInput"] input:focus { border-color: #0d6efd !important; box-shadow: 0 0 0 1px #0d6efd !important; }
     [data-testid="stTextInput"] label { color: #888 !important; }
@@ -280,14 +254,9 @@ if not st.session_state['logged_in'] and not st.session_state['guest_mode']:
     
     c1,c2,c3 = st.columns([1,1.5,1])
     with c2:
-        # Requesting dark background version for the black login screen
         logo_html = get_logo_html("48px", dark_bg=True)
-        st.markdown(f"""
-        <div class="login-box">
-            {logo_html}
-            <p class="login-subtitle" style="margin-top:15px;">Professional Personal Banking</p>
-        </div>
-        """, unsafe_allow_html=True)
+        # NO INDENTATION in HTML string
+        st.markdown(f"""<div class="login-box">{logo_html}<p class="login-subtitle" style="margin-top:15px;">Professional Personal Banking</p></div>""", unsafe_allow_html=True)
         
         uid = st.text_input("User ID", max_chars=6, type="password", placeholder="Access Code (6 Digits)")
         b1,b2=st.columns(2)
@@ -661,15 +630,6 @@ elif mode == "Asset Terminal":
         components.html(f"""<div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>{{"interval": "1m","width": "100%","isTransparent": true,"height": "450","symbol": "{symbol_for_widget}","showIntervalTabs": true,"displayMode": "single","locale": "en","colorTheme": "light"}}</script></div>""", height=460)
 
     with main_col:
-        # Helper: Smart Search Wrapper
-        def smart_search(query):
-            if query:
-                q_upper = query.upper().strip()
-                ticker_res = ASSET_MAP.get(q_upper, q_upper)
-                st.session_state['ticker_search'] = ticker_res
-                st.session_state['mode'] = "Asset Terminal"
-                st.rerun()
-
         default_ticker = st.session_state.get('ticker_search', "")
         st.markdown(f'<div class="prostock-logo" style="font-size:24px;">{get_logo_html("24px")} Terminal</div>', unsafe_allow_html=True)
         
