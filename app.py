@@ -143,6 +143,7 @@ st.markdown("""
     
     /* Guest Homepage Styling */
     .guest-hero {
+        /* Professional Gradient Background */
         background: linear-gradient(135deg, #000000 0%, #001f3f 100%);
         height: 500px;
         display: flex;
@@ -158,8 +159,9 @@ st.markdown("""
         position: relative;
         color: white;
         font-size: 56px;
-        font-weight: 900;
-        font-family: 'Roboto', sans-serif;
+        font-weight: 700;
+        font-family: Georgia, serif; /* Georgia Font as requested */
+        font-style: italic;
         text-align: center;
         text-shadow: 0 2px 10px rgba(0,0,0,0.8);
         padding: 20px;
@@ -268,12 +270,15 @@ if not st.session_state['logged_in'] and not st.session_state['guest_mode']:
     
     c1,c2,c3 = st.columns([1,1.5,1])
     with c2:
+        # Using the variable get_logo_html function result safely
+        logo_html = get_logo_html("48px")
         st.markdown(f"""
         <div class="login-box">
-            {get_logo_html("48px")}
+            {logo_html}
             <p class="login-subtitle" style="margin-top:15px;">Professional Personal Banking</p>
         </div>
         """, unsafe_allow_html=True)
+        
         uid = st.text_input("User ID", max_chars=6, type="password", placeholder="Access Code (6 Digits)")
         b1,b2=st.columns(2)
         with b1: 
@@ -505,7 +510,6 @@ def submit_chat():
 
 # --- NAVIGATION ---
 st.sidebar.markdown(f'<div class="prostock-logo-sidebar">{get_logo_html("32px")}</div>', unsafe_allow_html=True)
-
 if st.sidebar.button(txt("Home"), type="secondary", use_container_width=True): st.session_state['mode'] = "Home"
 if st.sidebar.button("🌐 Language: " + st.session_state['lang']):
     st.session_state['lang'] = "한국어" if st.session_state['lang'] == "English" else "English"
@@ -518,26 +522,40 @@ else:
     if st.sidebar.button(txt("Favs"), use_container_width=True): st.session_state['mode'] = "Favorites"
     if st.sidebar.button(txt("Media"), use_container_width=True): st.session_state['mode'] = "Media & News"
     if st.sidebar.button(txt("Map"), use_container_width=True): st.session_state['mode'] = "Map"
-
 mode = st.session_state['mode']
+st.sidebar.markdown("---")
+with st.sidebar.expander("🧮 Currency Calc", expanded=False):
+    cc_amt = st.number_input("Amt", 100.0)
+    c1, c2 = st.columns(2)
+    with c1: cc_f = st.selectbox("From", ["USD", "KRW", "EUR", "JPY", "BTC"])
+    with c2: cc_to = st.selectbox("To", ["KRW", "USD", "EUR", "JPY", "BTC"])
+    if st.button(txt("Convert")):
+        try:
+            if cc_f==cc_to: res=cc_amt
+            elif cc_f=='USD': r = yf.Ticker(f"{cc_to}=X").history(period='1d')['Close'].iloc[-1]; res = cc_amt * r if cc_to!='KRW' else cc_amt * r 
+            else: res = None 
+            if res: st.success(f"{res:,.2f} {cc_to}")
+        except: st.error(txt("Rate_Err"))
 
 # --- MODE: HOMEPAGE ---
 if mode == "Home":
     # Guest Mode Header Check
     if st.session_state.get('guest_mode', False):
-        # CSS for removing sidebar in guest mode
-        st.markdown("""
-            <style>
-            [data-testid="stSidebar"] { display: none; }
-            </style>
-        """, unsafe_allow_html=True)
-
-        # GUEST HOME HEADER
+        st.markdown("""<style>[data-testid="stSidebar"] { display: none; }</style>""", unsafe_allow_html=True)
         h1, h2, h3 = st.columns([1,2,1])
-        with h1: st.markdown(f'<div style="margin-top: 10px;">{get_logo_html("28px")}</div>', unsafe_allow_html=True)
+        with h1: st.markdown(f'<div class="prostock-logo" style="font-size:24px;">{get_logo_html("24px")}</div>', unsafe_allow_html=True)
         with h2: 
-             q = st.text_input("Search", placeholder=txt("Search_Ph"), label_visibility="collapsed")
-             if q: smart_search(q)
+             # Helper: Smart Search Wrapper
+            def smart_search(query):
+                if query:
+                    q_upper = query.upper().strip()
+                    ticker_res = ASSET_MAP.get(q_upper, q_upper)
+                    st.session_state['ticker_search'] = ticker_res
+                    st.session_state['mode'] = "Asset Terminal"
+                    st.rerun()
+
+            q = st.text_input("Search", placeholder=txt("Search_Ph"), label_visibility="collapsed")
+            if q: smart_search(q)
         with h3:
             b1, b2 = st.columns(2)
             with b1: 
@@ -555,7 +573,15 @@ if mode == "Home":
         """, unsafe_allow_html=True)
         
     else:
-        # STANDARD HOME (LOGGED IN)
+        # Helper: Smart Search Wrapper
+        def smart_search(query):
+            if query:
+                q_upper = query.upper().strip()
+                ticker_res = ASSET_MAP.get(q_upper, q_upper)
+                st.session_state['ticker_search'] = ticker_res
+                st.session_state['mode'] = "Asset Terminal"
+                st.rerun()
+
         st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
         c_fill, c_acc = st.columns([3, 1])
         with c_acc:
@@ -618,6 +644,15 @@ elif mode == "Asset Terminal":
         components.html(f"""<div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>{{"interval": "1m","width": "100%","isTransparent": true,"height": "450","symbol": "{symbol_for_widget}","showIntervalTabs": true,"displayMode": "single","locale": "en","colorTheme": "light"}}</script></div>""", height=460)
 
     with main_col:
+        # Helper: Smart Search Wrapper
+        def smart_search(query):
+            if query:
+                q_upper = query.upper().strip()
+                ticker_res = ASSET_MAP.get(q_upper, q_upper)
+                st.session_state['ticker_search'] = ticker_res
+                st.session_state['mode'] = "Asset Terminal"
+                st.rerun()
+
         default_ticker = st.session_state.get('ticker_search', "")
         st.markdown(f'<div class="prostock-logo" style="font-size:24px;">{get_logo_html("24px")} Terminal</div>', unsafe_allow_html=True)
         
