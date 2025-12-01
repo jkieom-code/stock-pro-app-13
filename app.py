@@ -21,84 +21,90 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- NEW LOGO URL ---
-PROSTOCK_LOGO_URL = "https://i.imgur.com/Kq7QZgG.png" # Placeholder for your uploaded image
+# --- LOGO HTML COMPONENT (CSS Version - Never Breaks) ---
+def get_logo_html(size="24px"):
+    return f"""
+    <div style="
+        background-color: #2962FF; 
+        color: white; 
+        padding: 4px 12px; 
+        border-radius: 4px; 
+        display: inline-block; 
+        font-family: 'Roboto', sans-serif; 
+        font-weight: 900; 
+        font-size: {size}; 
+        letter-spacing: -0.5px;
+    ">
+        ProStock
+    </div>
+    """
 
 # --- Custom CSS ---
-st.markdown(f"""
+st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
-    html, body, [class*="css"] {{ font-family: 'Roboto', sans-serif; }}
-    .stApp {{ background-color: #ffffff; color: #333333; }}
+    html, body, [class*="css"] { font-family: 'Roboto', sans-serif; }
+    .stApp { background-color: #ffffff; color: #333333; }
     
-    /* Logo Styles - Image Based */
-    .prostock-logo-img {{
-        height: 40px;
-        width: auto;
-        vertical-align: middle;
-    }}
-    .prostock-logo-sidebar {{ 
+    /* Sidebar Logo Alignment */
+    .prostock-logo-sidebar { 
         text-align: center;
         margin-bottom: 15px;
-    }}
-    .homepage-logo-container {{
+    }
+    
+    .homepage-logo-container {
         text-align: center;
-        margin-bottom: 10px;
-    }}
-    .homepage-logo-img {{
-        height: 70px;
-        width: auto;
-    }}
+        margin-bottom: 15px;
+    }
     
     /* Homepage Elements */
-    .hero-container {{ padding: 20px 20px; text-align: center; }}
+    .hero-container { padding: 20px 20px; text-align: center; }
     
     /* Trending Cards */
-    .trend-card {{
+    .trend-card {
         background: white; border: 1px solid #f0f0f0; border-radius: 12px; padding: 20px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.03); transition: all 0.3s ease; height: 100%;
-    }}
-    .trend-card:hover {{ box-shadow: 0 8px 20px rgba(13, 110, 253, 0.1); transform: translateY(-3px); border-color: #0d6efd; }}
-    .trend-header {{ font-size: 16px; color: #333; font-weight: 800; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #f8f9fa; padding-bottom: 10px; }}
-    .trend-item {{ display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f8f9fa; font-size: 14px; }}
-    .trend-item:last-child {{ border-bottom: none; }}
-    .trend-name {{ font-weight: 600; color: #555; }}
-    .trend-price-badge {{ font-weight: 700; padding: 4px 8px; border-radius: 6px; font-size: 12px; }}
+    }
+    .trend-card:hover { box-shadow: 0 8px 20px rgba(13, 110, 253, 0.1); transform: translateY(-3px); border-color: #0d6efd; }
+    .trend-header { font-size: 16px; color: #333; font-weight: 800; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #f8f9fa; padding-bottom: 10px; }
+    .trend-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f8f9fa; font-size: 14px; }
+    .trend-item:last-child { border-bottom: none; }
+    .trend-name { font-weight: 600; color: #555; }
+    .trend-price-badge { font-weight: 700; padding: 4px 8px; border-radius: 6px; font-size: 12px; }
     
     /* Account Top Right */
-    .account-bar {{ display: flex; justify-content: flex-end; align-items: center; gap: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; margin-bottom: 20px; }}
-    .user-badge {{ font-weight: 600; color: #555; background: #e9ecef; padding: 5px 10px; border-radius: 20px; font-size: 12px; }}
+    .account-bar { display: flex; justify-content: flex-end; align-items: center; gap: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; margin-bottom: 20px; }
+    .user-badge { font-weight: 600; color: #555; background: #e9ecef; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
     
     /* Header & Logo Integration */
-    .finance-header {{ background-color: #ffffff; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px; margin-bottom: 20px; margin-top: 10px; }}
-    .asset-logo-img {{ height: 50px; width: 50px; border-radius: 50%; object-fit: contain; margin-right: 15px; border: 1px solid #eee; background: white; vertical-align: middle; }}
+    .finance-header { background-color: #ffffff; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px; margin-bottom: 20px; margin-top: 10px; }
+    .asset-logo-img { height: 50px; width: 50px; border-radius: 50%; object-fit: contain; margin-right: 15px; border: 1px solid #eee; background: white; vertical-align: middle; }
     
     /* Stats Grid */
-    .stat-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px; margin-top: 15px; }}
-    .stat-item {{ font-size: 14px; }}
-    .stat-label {{ color: #888; font-size: 12px; }}
-    .stat-value {{ font-weight: 600; color: #333; }}
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px; margin-top: 15px; }
+    .stat-item { font-size: 14px; }
+    .stat-label { color: #888; font-size: 12px; }
+    .stat-value { font-weight: 600; color: #333; }
     
     /* News Feed (Clean Text Style - No Images) */
-    .news-card-row {{
+    .news-card-row {
         display: flex;
         flex-direction: column;
         background: white;
-        border: 1px solid #eee;
-        border-left: 4px solid #0d6efd;
+        border-bottom: 1px solid #eee;
         padding: 15px;
         text-decoration: none;
         transition: all 0.2s ease;
         margin-bottom: 10px;
         border-radius: 6px;
-    }}
-    .news-card-row:hover {{ 
+    }
+    .news-card-row:hover { 
         background-color: #f8f9fa; 
         transform: translateX(3px);
         box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }}
-    .news-content {{ flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }}
-    .news-title {{ 
+    }
+    .news-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+    .news-title { 
         font-size: 15px; 
         font-weight: 600; 
         color: #212529; 
@@ -106,38 +112,37 @@ st.markdown(f"""
         margin-bottom: 8px; 
         text-decoration: none; 
         display: block;
-    }}
-    .news-meta {{ 
+    }
+    .news-meta { 
         font-size: 11px; 
         color: #888; 
         text-transform: uppercase;
         font-weight: 700;
         letter-spacing: 0.5px;
-    }}
+    }
     
     /* Gemini Sidebar */
-    .gemini-box {{
+    .gemini-box {
         background-color: #f8f9fa;
         border-left: 1px solid #eee;
         padding: 20px;
         height: 100%;
         min-height: 600px;
-    }}
-    .gemini-header {{
+    }
+    .gemini-header {
         font-size: 20px; font-weight: 700; color: #333; margin-bottom: 20px;
         display: flex; align-items: center; gap: 10px;
-    }}
-    .gemini-logo-icon {{ width: 30px; height: 30px; }}
+    }
+    .gemini-logo-icon { width: 30px; height: 30px; }
     
-    .chat-bubble {{
+    .chat-bubble {
         background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px;
         box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-size: 13px;
         border: 1px solid #eee;
-    }}
+    }
     
     /* Guest Homepage Styling */
-    .guest-hero {{
-        /* Fallback gradient if image fails (Signature Black & Blue) */
+    .guest-hero {
         background: linear-gradient(135deg, #000000 0%, #001f3f 100%);
         height: 500px;
         display: flex;
@@ -148,26 +153,25 @@ st.markdown(f"""
         margin-top: 20px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         overflow: hidden;
-    }}
-    .guest-hero-text {{
+    }
+    .guest-hero-text {
         position: relative;
         color: white;
         font-size: 56px;
         font-weight: 900;
-        /* Reverted to Roboto/System font */
         font-family: 'Roboto', sans-serif;
         text-align: center;
         text-shadow: 0 2px 10px rgba(0,0,0,0.8);
         padding: 20px;
         z-index: 2;
-    }}
+    }
 
     /* Loading */
-    .loading-container {{ display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; animation: fadein 1s; }}
+    .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; animation: fadein 1s; }
     
     /* Layout Fixes */
-    .block-container {{ padding-top: 5rem; max-width: 98%; }}
-    #MainMenu {{visibility: hidden;}} footer {{visibility: hidden;}}
+    .block-container { padding-top: 5rem; max-width: 98%; }
+    #MainMenu {visibility: hidden;} footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
@@ -222,7 +226,13 @@ def txt(key):
 if not st.session_state['splash_shown']:
     placeholder = st.empty()
     with placeholder.container():
-        st.markdown(f"""<div class="loading-container"><img src="{PROSTOCK_LOGO_URL}" style="height: 80px;"><p style='color: #666; margin-bottom: 10px;'>Institutional Grade Analytics</p><p style='color: #0d6efd; font-size: 18px; font-weight: 500;'>professional personal banking</p></div>""", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="loading-container">
+            {get_logo_html("60px")}
+            <p style='color: #666; margin-bottom: 10px; margin-top: 20px;'>Institutional Grade Analytics</p>
+            <p style='color: #0d6efd; font-size: 18px; font-weight: 500;'>professional personal banking</p>
+        </div>
+        """, unsafe_allow_html=True)
     time.sleep(3)
     placeholder.empty()
     st.session_state['splash_shown'] = True
@@ -242,23 +252,28 @@ def login_later():
 
 # --- LOGIN SCREEN ---
 if not st.session_state['logged_in'] and not st.session_state['guest_mode']:
-    st.markdown(f"""
+    st.markdown("""
     <style>
-    .stApp {{ background-color: #000000 !important; }}
-    [data-testid="stHeader"] {{ background-color: #000000 !important; }}
-    .login-box {{ background-color: #111111; padding: 40px; border-radius: 12px; border: 1px solid #222; border-top: 3px solid #0d6efd; box-shadow: 0 0 30px rgba(13, 110, 253, 0.15); text-align: center; margin-top: 50px; }}
-    .login-subtitle {{ color: #666; font-size: 14px; margin-bottom: 30px; letter-spacing: 1px; text-transform: uppercase; }}
-    [data-testid="stTextInput"] input {{ background-color: #1a1a1a !important; color: #ffffff !important; border: 1px solid #333 !important; }}
-    [data-testid="stTextInput"] input:focus {{ border-color: #0d6efd !important; box-shadow: 0 0 0 1px #0d6efd !important; }}
-    [data-testid="stTextInput"] label {{ color: #888 !important; }}
-    .stButton > button {{ background-color: #000000 !important; color: #0d6efd !important; border: 2px solid #0d6efd !important; border-radius: 8px !important; font-weight: bold !important; transition: all 0.3s ease !important; }}
-    .stButton > button:hover {{ background-color: #0d6efd !important; color: #000000 !important; box-shadow: 0 0 15px rgba(13, 110, 253, 0.6) !important; }}
+    .stApp { background-color: #000000 !important; }
+    [data-testid="stHeader"] { background-color: #000000 !important; }
+    .login-box { background-color: #111111; padding: 40px; border-radius: 12px; border: 1px solid #222; border-top: 3px solid #0d6efd; box-shadow: 0 0 30px rgba(13, 110, 253, 0.15); text-align: center; margin-top: 50px; }
+    .login-subtitle { color: #666; font-size: 14px; margin-bottom: 30px; letter-spacing: 1px; text-transform: uppercase; }
+    [data-testid="stTextInput"] input { background-color: #1a1a1a !important; color: #ffffff !important; border: 1px solid #333 !important; }
+    [data-testid="stTextInput"] input:focus { border-color: #0d6efd !important; box-shadow: 0 0 0 1px #0d6efd !important; }
+    [data-testid="stTextInput"] label { color: #888 !important; }
+    .stButton > button { background-color: #000000 !important; color: #0d6efd !important; border: 2px solid #0d6efd !important; border-radius: 8px !important; font-weight: bold !important; transition: all 0.3s ease !important; }
+    .stButton > button:hover { background-color: #0d6efd !important; color: #000000 !important; box-shadow: 0 0 15px rgba(13, 110, 253, 0.6) !important; }
     </style>
     """, unsafe_allow_html=True)
     
     c1,c2,c3 = st.columns([1,1.5,1])
     with c2:
-        st.markdown(f"""<div class="login-box"><img src="{PROSTOCK_LOGO_URL}" style="height: 60px; margin-bottom: 10px;"><p class="login-subtitle">Professional Personal Banking</p></div>""", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="login-box">
+            {get_logo_html("48px")}
+            <p class="login-subtitle" style="margin-top:15px;">Professional Personal Banking</p>
+        </div>
+        """, unsafe_allow_html=True)
         uid = st.text_input("User ID", max_chars=6, type="password", placeholder="Access Code (6 Digits)")
         b1,b2=st.columns(2)
         with b1: 
@@ -277,55 +292,15 @@ if not st.session_state['logged_in'] and not st.session_state['guest_mode']:
 
 # --- ASSET MAP ---
 ASSET_MAP = {
-    # Top US Stocks
-    "APPLE": "AAPL", "MICROSOFT": "MSFT", "NVIDIA": "NVDA", "AMAZON": "AMZN", "GOOGLE": "GOOGL",
-    "META": "META", "TESLA": "TSLA", "BERKSHIRE": "BRK-B", "TSMC": "TSM", "BROADCOM": "AVGO",
-    "LILLY": "LLY", "JPMORGAN": "JPM", "VISA": "V", "WALMART": "WMT", "EXXON": "XOM",
-    "MASTERCARD": "MA", "UNITEDHEALTH": "UNH", "JOHNSON": "JNJ", "PROCTER": "PG", "HOME DEPOT": "HD",
-    "COSTCO": "COST", "ABBVIE": "ABBV", "MERCK": "MRK", "CHEVRON": "CVX", "AMD": "AMD",
-    "NETFLIX": "NFLX", "ADOBE": "ADBE", "SALESFORCE": "CRM", "COCA COLA": "KO", "PEPSI": "PEP",
-    "BANK OF AMERICA": "BAC", "THERMO FISHER": "TMO", "CISCO": "CSCO", "INTEL": "INTC",
-    "DISNEY": "DIS", "NIKE": "NKE", "MCDONALDS": "MCD", "STARBUCKS": "SBUX", "PAYPAL": "PYPL",
-    "COINBASE": "COIN", "PALANTIR": "PLTR", "GAMESTOP": "GME", "AMC": "AMC",
-
-    # Top Crypto
     "BITCOIN": "BTC-USD", "BTC": "BTC-USD", "ETHEREUM": "ETH-USD", "ETH": "ETH-USD",
-    "SOLANA": "SOL-USD", "XRP": "XRP-USD", "BNB": "BNB-USD", "DOGECOIN": "DOGE-USD",
-    "CARDANO": "ADA-USD", "TRON": "TRX-USD", "AVALANCHE": "AVAX-USD", "SHIBA INU": "SHIB-USD",
-    "TONCOIN": "TON-USD", "POLKADOT": "DOT-USD", "LINK": "LINK-USD", "LITECOIN": "LTC-USD",
-
-    # Top Commodities
-    "GOLD": "GC=F", "SILVER": "SI=F", "COPPER": "HG=F", "PLATINUM": "PL=F", "PALLADIUM": "PA=F",
-    "OIL": "CL=F", "CRUDE OIL": "CL=F", "WTI": "CL=F", "BRENT": "BZ=F", "NATURAL GAS": "NG=F",
-    "CORN": "ZC=F", "SOYBEANS": "ZS=F", "WHEAT": "ZW=F", "SUGAR": "SB=F", "COFFEE": "KC=F",
-
-    # Major Currencies
-    "USD/KRW": "KRW=X", "WON": "KRW=X", "EUR/USD": "EURUSD=X", "JPY/USD": "JPY=X", 
-    "GBP/USD": "GBPUSD=X", "AUD/USD": "AUDUSD=X", "CAD/USD": "CAD=X", "CNY/USD": "CNY=X",
-    "CHF/USD": "CHF=X",
-
-    # Indices
-    "S&P 500": "^GSPC", "DOW JONES": "^DJI", "NASDAQ": "^IXIC", "RUSSELL 2000": "^RUT",
-    "KOSPI": "^KS11", "KOSDAQ": "^KQ11", "NIKKEI": "^N225", "FTSE 100": "^FTSE",
-
-    # Korean (Hangul)
-    "삼성전자": "005930.KS", "SK하이닉스": "000660.KS", "현대차": "005380.KS", "기아": "000270.KS",
-    "LG에너지솔루션": "373220.KS", "삼성바이오로직스": "207940.KS", "셀트리온": "068270.KS", 
-    "네이버": "035420.KS", "카카오": "035720.KS", "포스코홀딩스": "005490.KS", "LG화학": "051910.KS",
-    "비트코인": "BTC-USD", "이더리움": "ETH-USD", "리플": "XRP-USD", "솔라나": "SOL-USD",
-    "애플": "AAPL", "테슬라": "TSLA", "엔비디아": "NVDA", "마이크로소프트": "MSFT", "아마존": "AMZN",
-    "구글": "GOOGL", "금": "GC=F", "은": "SI=F", "원유": "CL=F", "환율": "KRW=X"
+    "SOLANA": "SOL-USD", "XRP": "XRP-USD", "GOLD": "GC=F", "SILVER": "SI=F",
+    "OIL": "CL=F", "USD/KRW": "KRW=X", "APPLE": "AAPL", "TESLA": "TSLA",
+    "NVIDIA": "NVDA", "GOOGLE": "GOOGL", "AMAZON": "AMZN", "SAMSUNG": "005930.KS", "DISNEY": "DIS",
+    "KOSPI": "^KS11", "KOSDAQ": "^KQ11",
+    "비트코인": "BTC-USD", "이더리움": "ETH-USD", "리플": "XRP-USD", "솔라나": "SOL-USD", 
+    "삼성전자": "005930.KS", "삼성": "005930.KS", "애플": "AAPL", "테슬라": "TSLA", "엔비디아": "NVDA",
+    "금": "GC=F", "원유": "CL=F", "환율": "KRW=X", "원달러": "KRW=X", "코스피": "^KS11", "코스닥": "^KQ11"
 }
-
-# --- Helper: Smart Search Wrapper ---
-def smart_search(query):
-    if query:
-        q_upper = query.upper().strip()
-        # Look up in map or use direct
-        ticker_res = ASSET_MAP.get(q_upper, q_upper)
-        st.session_state['ticker_search'] = ticker_res
-        st.session_state['mode'] = "Asset Terminal"
-        st.rerun()
 
 @st.cache_data(ttl=10)
 def get_live_price(ticker):
@@ -529,7 +504,8 @@ def submit_chat():
         st.session_state.chat_input_val = "" 
 
 # --- NAVIGATION ---
-st.sidebar.markdown(f'<div class="prostock-logo-sidebar"><img src="{PROSTOCK_LOGO_URL}" class="prostock-logo-img"></div>', unsafe_allow_html=True)
+st.sidebar.markdown(f'<div class="prostock-logo-sidebar">{get_logo_html("32px")}</div>', unsafe_allow_html=True)
+
 if st.sidebar.button(txt("Home"), type="secondary", use_container_width=True): st.session_state['mode'] = "Home"
 if st.sidebar.button("🌐 Language: " + st.session_state['lang']):
     st.session_state['lang'] = "한국어" if st.session_state['lang'] == "English" else "English"
@@ -558,7 +534,7 @@ if mode == "Home":
 
         # GUEST HOME HEADER
         h1, h2, h3 = st.columns([1,2,1])
-        with h1: st.markdown(f'<div class="prostock-logo" style="font-size:24px;"><img src="{PROSTOCK_LOGO_URL}" class="prostock-logo-img"></div>', unsafe_allow_html=True)
+        with h1: st.markdown(f'<div style="margin-top: 10px;">{get_logo_html("28px")}</div>', unsafe_allow_html=True)
         with h2: 
              q = st.text_input("Search", placeholder=txt("Search_Ph"), label_visibility="collapsed")
              if q: smart_search(q)
@@ -587,7 +563,7 @@ if mode == "Home":
                 if st.button(txt("Logout"), use_container_width=True): logout_user()
                 if st.button(txt("Delete"), type="primary", use_container_width=True): delete_account()
 
-        st.markdown(f"""<div class="hero-container"><div class="homepage-logo-container"><img src="{PROSTOCK_LOGO_URL}" class="homepage-logo-img"></div><p style="font-size:18px; color:#666;">{txt("Hero_Sub")}</p></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class="hero-container"><div class="homepage-logo-container">{get_logo_html("60px")}</div><p style="font-size:18px; color:#666;">{txt("Hero_Sub")}</p></div>""", unsafe_allow_html=True)
         c1, c2, c3 = st.columns([1, 2, 1])
         with c2:
             big_search = st.text_input("🔍 " + txt("Search"), placeholder=txt("Search_Ph"), label_visibility="collapsed")
@@ -643,7 +619,7 @@ elif mode == "Asset Terminal":
 
     with main_col:
         default_ticker = st.session_state.get('ticker_search', "")
-        st.markdown(f'<div class="prostock-logo" style="font-size:24px;"><img src="{PROSTOCK_LOGO_URL}" class="prostock-logo-img"> Terminal</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="prostock-logo" style="font-size:24px;">{get_logo_html("24px")} Terminal</div>', unsafe_allow_html=True)
         
         c_search, c_btn = st.columns([4, 1])
         with c_search:
@@ -728,11 +704,8 @@ elif mode == "Asset Terminal":
                 prev_p = data['Close'].iloc[-2] if len(data)>1 else curr_p
                 chg = curr_p - prev_p
                 pct = (chg/prev_p)*100 if prev_p else 0
-                logo_url = info.get('logo_url', '')
-                if not logo_url and 'website' in info and info['website']:
-                    try: domain = info['website'].split('//')[-1].split('/')[0].replace('www.', ''); logo_url = f"https://logo.clearbit.com/{domain}"
-                    except: pass
-                logo_html = f'<img src="{logo_url}" class="asset-logo-img">' if logo_url else ''
+                
+                logo_html = f'<div style="margin-right:15px;">{get_logo_html("32px")}</div>'
                 curr_code = info.get('currency', 'USD')
                 try: krw_rate = yf.Ticker("KRW=X").history(period="1d")['Close'].iloc[-1]
                 except: krw_rate = 0
