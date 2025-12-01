@@ -159,9 +159,8 @@ st.markdown("""
         position: relative;
         color: white;
         font-size: 56px;
-        font-weight: 700;
-        font-family: Georgia, serif; /* Georgia Font as requested */
-        font-style: italic;
+        font-weight: 900;
+        font-family: 'Roboto', sans-serif;
         text-align: center;
         text-shadow: 0 2px 10px rgba(0,0,0,0.8);
         padding: 20px;
@@ -259,7 +258,7 @@ if not st.session_state['logged_in'] and not st.session_state['guest_mode']:
     .stApp { background-color: #000000 !important; }
     [data-testid="stHeader"] { background-color: #000000 !important; }
     .login-box { background-color: #111111; padding: 40px; border-radius: 12px; border: 1px solid #222; border-top: 3px solid #0d6efd; box-shadow: 0 0 30px rgba(13, 110, 253, 0.15); text-align: center; margin-top: 50px; }
-    .login-subtitle { color: #666; font-size: 14px; margin-bottom: 30px; letter-spacing: 1px; text-transform: uppercase; }
+    .login-subtitle { color: #e0e0e0; font-size: 14px; margin-bottom: 30px; letter-spacing: 1px; text-transform: uppercase; }
     [data-testid="stTextInput"] input { background-color: #1a1a1a !important; color: #ffffff !important; border: 1px solid #333 !important; }
     [data-testid="stTextInput"] input:focus { border-color: #0d6efd !important; box-shadow: 0 0 0 1px #0d6efd !important; }
     [data-testid="stTextInput"] label { color: #888 !important; }
@@ -541,7 +540,14 @@ with st.sidebar.expander("🧮 Currency Calc", expanded=False):
 if mode == "Home":
     # Guest Mode Header Check
     if st.session_state.get('guest_mode', False):
-        st.markdown("""<style>[data-testid="stSidebar"] { display: none; }</style>""", unsafe_allow_html=True)
+        # CSS for removing sidebar in guest mode
+        st.markdown("""
+            <style>
+            [data-testid="stSidebar"] { display: none; }
+            </style>
+        """, unsafe_allow_html=True)
+
+        # GUEST HOME HEADER
         h1, h2, h3 = st.columns([1,2,1])
         with h1: st.markdown(f'<div class="prostock-logo" style="font-size:24px;">{get_logo_html("24px")}</div>', unsafe_allow_html=True)
         with h2: 
@@ -644,15 +650,6 @@ elif mode == "Asset Terminal":
         components.html(f"""<div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>{{"interval": "1m","width": "100%","isTransparent": true,"height": "450","symbol": "{symbol_for_widget}","showIntervalTabs": true,"displayMode": "single","locale": "en","colorTheme": "light"}}</script></div>""", height=460)
 
     with main_col:
-        # Helper: Smart Search Wrapper
-        def smart_search(query):
-            if query:
-                q_upper = query.upper().strip()
-                ticker_res = ASSET_MAP.get(q_upper, q_upper)
-                st.session_state['ticker_search'] = ticker_res
-                st.session_state['mode'] = "Asset Terminal"
-                st.rerun()
-
         default_ticker = st.session_state.get('ticker_search', "")
         st.markdown(f'<div class="prostock-logo" style="font-size:24px;">{get_logo_html("24px")} Terminal</div>', unsafe_allow_html=True)
         
