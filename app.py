@@ -21,21 +21,22 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- LOGO HTML COMPONENT (CSS Version - Never Breaks) ---
-def get_logo_html(size="24px"):
+# --- LOGO HTML COMPONENT (Text Version - Black/White & Blue) ---
+def get_logo_html(size="24px", dark_bg=False):
+    # Use white text for 'Pro' if background is dark, else black. Blue remains the same.
+    pro_color = "#ffffff" if dark_bg else "#333333"
+    stock_color = "#0d6efd"
+    
     return f"""
     <div style="
-        background-color: #2962FF; 
-        color: white; 
-        padding: 4px 12px; 
-        border-radius: 4px; 
-        display: inline-block; 
-        font-family: 'Roboto', sans-serif; 
-        font-weight: 900; 
-        font-size: {size}; 
+        font-family: 'Roboto', sans-serif;
+        font-weight: 900;
+        font-size: {size};
         letter-spacing: -0.5px;
+        color: {pro_color};
+        display: inline-block;
     ">
-        ProStock
+        Pro<span style="color: {stock_color};">Stock</span>
     </div>
     """
 
@@ -279,8 +280,8 @@ if not st.session_state['logged_in'] and not st.session_state['guest_mode']:
     
     c1,c2,c3 = st.columns([1,1.5,1])
     with c2:
-        # Using the variable get_logo_html function result safely
-        logo_html = get_logo_html("48px")
+        # Requesting dark background version for the black login screen
+        logo_html = get_logo_html("48px", dark_bg=True)
         st.markdown(f"""
         <div class="login-box">
             {logo_html}
@@ -660,6 +661,15 @@ elif mode == "Asset Terminal":
         components.html(f"""<div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>{{"interval": "1m","width": "100%","isTransparent": true,"height": "450","symbol": "{symbol_for_widget}","showIntervalTabs": true,"displayMode": "single","locale": "en","colorTheme": "light"}}</script></div>""", height=460)
 
     with main_col:
+        # Helper: Smart Search Wrapper
+        def smart_search(query):
+            if query:
+                q_upper = query.upper().strip()
+                ticker_res = ASSET_MAP.get(q_upper, q_upper)
+                st.session_state['ticker_search'] = ticker_res
+                st.session_state['mode'] = "Asset Terminal"
+                st.rerun()
+
         default_ticker = st.session_state.get('ticker_search', "")
         st.markdown(f'<div class="prostock-logo" style="font-size:24px;">{get_logo_html("24px")} Terminal</div>', unsafe_allow_html=True)
         
